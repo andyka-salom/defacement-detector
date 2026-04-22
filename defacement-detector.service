@@ -1,0 +1,19 @@
+[Unit]
+Description=Sistem Deteksi Dini Web Defacement — 1 VPS Ubuntu (Nginx)
+After=network.target nginx.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=adm
+WorkingDirectory=/home/ubuntu/defacement-detector
+ExecStart=/home/ubuntu/defacement-detector/venv/bin/python main.py --all
+Restart=on-failure
+RestartSec=15
+StandardOutput=append:/home/ubuntu/defacement-detector/logs/system.log
+StandardError=append:/home/ubuntu/defacement-detector/logs/system.log
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
