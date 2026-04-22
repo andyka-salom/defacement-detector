@@ -2,6 +2,7 @@
 config/settings.py
 Memuat seluruh konfigurasi dari file .env
 Arsitektur: 1 VPS Ubuntu — Nginx + Python + PostgreSQL pada server yang sama.
+Lokasi project: /var/www/defacement-detector
 Log Nginx dibaca langsung dari sistem file lokal (tidak ada SSH).
 """
 import os
@@ -10,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ── Log Nginx (lokal, 1 server) ───────────────────────────────
-LOG_PATH = os.getenv("LOG_PATH", "/var/log/nginx/access.log")
+LOG_PATH = os.getenv("LOG_PATH", "/var/log/nginx/hs_access.log")
 
 # ── Target Website ────────────────────────────────────────────
 TARGET_BASE_URL = os.getenv("TARGET_BASE_URL", "https://x.com")
@@ -19,7 +20,7 @@ TARGET_BASE_URL = os.getenv("TARGET_BASE_URL", "https://x.com")
 DB_HOST     = os.getenv("DB_HOST",     "localhost")
 DB_PORT     = int(os.getenv("DB_PORT", 5432))
 DB_NAME     = os.getenv("DB_NAME",     "defacement_db")
-DB_USER     = os.getenv("DB_USER",     "postgres")
+DB_USER     = os.getenv("DB_USER",     "deploy_user")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 
 # ── Fonnte WhatsApp API ───────────────────────────────────────
