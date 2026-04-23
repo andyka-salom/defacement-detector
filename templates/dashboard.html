@@ -2,117 +2,987 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="refresh" content="30">
-<title>Dashboard Deteksi Web Defacement</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DefaceGuard — Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap');
-  :root {
-    --bg:#0a0e1a; --surface:#111827; --border:#1e2d45;
-    --accent:#00d4ff; --warn:#ffd166; --danger:#ff4757;
-    --ok:#7fff6b; --text:#e2e8f0; --muted:#64748b;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;padding:24px;}
-  h1{font-size:22px;font-weight:800;margin-bottom:4px;}
-  .sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:28px;}
-  /* Stats */
-  .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:28px;}
-  .stat{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;}
-  .stat-val{font-size:32px;font-weight:800;line-height:1;}
-  .stat-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:1px;}
-  .c-danger{color:var(--danger);}
-  .c-warn{color:var(--warn);}
-  .c-ok{color:var(--ok);}
-  .c-accent{color:var(--accent);}
-  /* Table */
-  .table-wrap{overflow-x:auto;}
-  table{width:100%;border-collapse:collapse;font-size:13px;}
-  th{background:#161d2e;color:var(--muted);font-family:'JetBrains Mono',monospace;
-     font-size:10px;letter-spacing:1px;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);}
-  td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
-  tr:hover td{background:rgba(255,255,255,.02);}
-  .badge{display:inline-block;padding:2px 8px;border-radius:2px;font-family:'JetBrains Mono',monospace;
-         font-size:10px;font-weight:600;letter-spacing:1px;}
-  .badge-HIGH  {background:rgba(255,71,87,.15); color:var(--danger);border:1px solid var(--danger);}
-  .badge-MEDIUM{background:rgba(255,209,102,.1);color:var(--warn);  border:1px solid var(--warn);}
-  .badge-LOW   {background:rgba(127,255,107,.08);color:var(--ok);   border:1px solid var(--ok);}
-  .mono{font-family:'JetBrains Mono',monospace;font-size:12px;}
-  .section-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;
-                 color:var(--muted);text-transform:uppercase;margin-bottom:12px;}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px;margin-bottom:24px;}
-  .refresh{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);text-align:right;margin-bottom:8px;}
+/* ── Reset & Base ──────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F0F4F8;--surface:#FFFFFF;--surface2:#F7F9FC;
+  --border:#E2E8F0;--border2:#CBD5E1;
+  --text:#0F172A;--text2:#475569;--text3:#94A3B8;
+  --blue:#2563EB;--blue-light:#EFF6FF;--blue-mid:#BFDBFE;
+  --green:#059669;--green-light:#ECFDF5;--green-mid:#A7F3D0;
+  --red:#DC2626;--red-light:#FEF2F2;--red-mid:#FECACA;
+  --orange:#D97706;--orange-light:#FFFBEB;--orange-mid:#FDE68A;
+  --purple:#7C3AED;--purple-light:#F5F3FF;--purple-mid:#DDD6FE;
+  --yellow:#CA8A04;--yellow-light:#FEFCE8;
+  --radius:10px;--radius-lg:14px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.07),0 2px 4px -1px rgba(0,0,0,.05);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.08),0 4px 6px -2px rgba(0,0,0,.04);
+  --mono:'DM Mono',monospace;
+  --sans:'DM Sans',sans-serif;
+  --sidebar:240px;
+}
+
+html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+
+/* ── Layout ─────────────────────────────────────────────────── */
+.layout{display:flex;min-height:100vh}
+
+/* ── Sidebar ─────────────────────────────────────────────────── */
+.sidebar{
+  width:var(--sidebar);flex-shrink:0;background:var(--text);
+  display:flex;flex-direction:column;position:fixed;top:0;left:0;
+  height:100vh;z-index:100;overflow:hidden;
+}
+.sidebar-logo{
+  padding:24px 20px 16px;border-bottom:1px solid rgba(255,255,255,.08);
+}
+.sidebar-logo .brand{font-size:17px;font-weight:600;color:#fff;letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
+.sidebar-logo .brand span{color:#60A5FA}
+.sidebar-logo .domain{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.35);margin-top:4px}
+.nav{flex:1;padding:12px 0;overflow-y:auto}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:10px 20px;
+  color:rgba(255,255,255,.55);cursor:pointer;transition:all .15s;
+  font-size:13px;font-weight:500;border-left:3px solid transparent;
+}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
+.nav-item.active{color:#fff;background:rgba(96,165,250,.15);border-left-color:#60A5FA}
+.nav-item .ico{width:16px;height:16px;opacity:.7;flex-shrink:0}
+.nav-item.active .ico{opacity:1}
+.nav-sep{margin:8px 20px;border:none;border-top:1px solid rgba(255,255,255,.07)}
+.nav-label{padding:8px 20px 4px;font-size:10px;font-weight:500;color:rgba(255,255,255,.3);letter-spacing:1px;text-transform:uppercase}
+
+.sidebar-status{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08)}
+.status-dot{
+  display:flex;align-items:center;gap:8px;
+  font-size:11px;font-weight:500;color:rgba(255,255,255,.5);
+}
+.dot{width:7px;height:7px;border-radius:50%;background:#6B7280;flex-shrink:0}
+.dot.ok{background:#34D399;box-shadow:0 0 0 3px rgba(52,211,153,.2)}
+.dot.error{background:#F87171}
+.dot.pulse{animation:pulse-dot 1.5s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── Main content ──────────────────────────────────────────── */
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 28px;height:58px;display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;z-index:50;
+}
+.topbar-title{font-size:15px;font-weight:600;color:var(--text)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.badge-live{
+  display:flex;align-items:center;gap:5px;
+  background:#ECFDF5;border:1px solid #A7F3D0;
+  color:#065F46;font-size:11px;font-weight:600;
+  padding:3px 10px;border-radius:20px;
+}
+.badge-live .live-dot{width:6px;height:6px;border-radius:50%;background:#10B981;animation:pulse-dot 1.2s infinite}
+.last-update{font-size:11px;color:var(--text3);font-family:var(--mono)}
+
+.content{padding:24px 28px;flex:1}
+
+/* ── Sections / Pages ──────────────────────────────────────── */
+.page{display:none}
+.page.active{display:block}
+
+/* ── Stat Cards ─────────────────────────────────────────────── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:18px 20px;
+  box-shadow:var(--shadow);transition:box-shadow .15s;
+}
+.stat-card:hover{box-shadow:var(--shadow-md)}
+.stat-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:15px}
+.stat-val{font-size:26px;font-weight:600;line-height:1;letter-spacing:-.5px}
+.stat-lbl{font-size:11px;font-weight:500;color:var(--text2);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:4px;font-family:var(--mono)}
+
+.s-blue  .stat-icon{background:var(--blue-light);color:var(--blue)}
+.s-green .stat-icon{background:var(--green-light);color:var(--green)}
+.s-red   .stat-icon{background:var(--red-light);color:var(--red)}
+.s-orange.stat-icon{background:var(--orange-light);color:var(--orange)}
+.s-purple.stat-icon{background:var(--purple-light);color:var(--purple)}
+.s-blue  .stat-val{color:var(--blue)}
+.s-green .stat-val{color:var(--green)}
+.s-red   .stat-val{color:var(--red)}
+.s-orange .stat-val{color:var(--orange)}
+.s-purple .stat-val{color:var(--purple)}
+
+/* ── Cards / Panels ─────────────────────────────────────────── */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);box-shadow:var(--shadow);
+  margin-bottom:20px;overflow:hidden;
+}
+.card-head{
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.card-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px}
+.card-title .ico2{font-size:14px}
+.card-body{padding:20px}
+.card-body.p0{padding:0}
+
+/* ── Grid layouts ────────────────────────────────────────────── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+
+/* ── Tables ─────────────────────────────────────────────────── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{
+  background:var(--surface2);color:var(--text2);font-size:10.5px;
+  font-weight:600;text-transform:uppercase;letter-spacing:.5px;
+  padding:9px 14px;text-align:left;border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+
+/* ── Status badges ───────────────────────────────────────────── */
+.s2xx{color:var(--green);background:var(--green-light);border:1px solid var(--green-mid)}
+.s3xx{color:var(--blue);background:var(--blue-light);border:1px solid var(--blue-mid)}
+.s4xx{color:var(--orange);background:var(--orange-light);border:1px solid var(--orange-mid)}
+.s5xx{color:var(--red);background:var(--red-light);border:1px solid var(--red-mid)}
+.status-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-family:var(--mono);font-size:11px;font-weight:500}
+
+.level-HIGH  {color:var(--red);background:var(--red-light);border:1px solid var(--red-mid)}
+.level-MEDIUM{color:var(--orange);background:var(--orange-light);border:1px solid var(--orange-mid)}
+.level-LOW   {color:var(--green);background:var(--green-light);border:1px solid var(--green-mid)}
+.level-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10.5px;font-weight:600;letter-spacing:.3px}
+
+.bot-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;background:#F5F3FF;color:#7C3AED;border:1px solid #DDD6FE}
+.human-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;background:#EFF6FF;color:#2563EB;border:1px solid #BFDBFE}
+
+/* ── Progress bar ────────────────────────────────────────────── */
+.progress-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.progress-row:last-child{margin-bottom:0}
+.progress-label{width:120px;font-size:12px;color:var(--text2);font-family:var(--mono);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.progress-bar-wrap{flex:1;background:var(--border);border-radius:4px;height:7px;overflow:hidden}
+.progress-bar{height:100%;border-radius:4px;transition:width .5s ease}
+.progress-count{width:50px;text-align:right;font-size:11px;font-weight:600;color:var(--text2);font-family:var(--mono)}
+
+/* ── Live log stream ─────────────────────────────────────────── */
+.live-log-wrap{
+  background:#0F172A;border-radius:var(--radius);padding:0;
+  font-family:var(--mono);font-size:11.5px;height:380px;
+  overflow-y:auto;overflow-x:hidden;
+}
+.log-entry{
+  display:flex;align-items:flex-start;gap:0;padding:5px 14px;
+  border-bottom:1px solid rgba(255,255,255,.04);
+  transition:background .1s;cursor:default;
+  animation:slide-in .2s ease;
+}
+@keyframes slide-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.log-entry:hover{background:rgba(255,255,255,.04)}
+.log-entry:last-child{border-bottom:none}
+.le-time{color:#64748B;width:84px;flex-shrink:0;font-size:10.5px}
+.le-ip  {color:#38BDF8;width:120px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.le-method{font-weight:500;width:46px;flex-shrink:0}
+.le-get{color:#34D399}.le-post{color:#F59E0B}.le-put{color:#A78BFA}.le-del{color:#F87171}.le-other{color:#94A3B8}
+.le-url{color:#E2E8F0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 8px}
+.le-status{width:36px;flex-shrink:0;text-align:right}
+.le-200{color:#34D399}.le-301,.le-302{color:#38BDF8}.le-404{color:#FBBF24}.le-500{color:#F87171}.le-other-s{color:#94A3B8}
+.le-size{color:#64748B;width:62px;flex-shrink:0;text-align:right;font-size:10px}
+.le-bot-tag{color:#A78BFA;font-size:9.5px;width:30px;flex-shrink:0;text-align:right}
+
+.log-empty{display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.2);font-size:13px;gap:8px}
+
+/* ── Charts (pure CSS bar charts) ───────────────────────────── */
+.bar-chart{display:flex;align-items:flex-end;gap:4px;height:80px;padding-top:4px}
+.bar-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.bar{width:100%;border-radius:3px 3px 0 0;min-height:3px;transition:height .4s ease}
+.bar-lbl{font-size:9px;color:var(--text3);font-family:var(--mono);white-space:nowrap}
+.bar-val{font-size:9px;color:var(--text2);font-weight:600;font-family:var(--mono)}
+
+/* ── Pie / Donut ─────────────────────────────────────────────── */
+.pie-wrap{display:flex;align-items:center;gap:20px}
+.pie-legend{flex:1}
+.legend-item{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px}
+.legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+/* ── Preview iframe ──────────────────────────────────────────── */
+.preview-wrap{
+  border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;background:var(--surface2);
+}
+.preview-bar{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:8px 14px;display:flex;align-items:center;gap:8px;
+}
+.preview-dots{display:flex;gap:5px}
+.preview-dots span{width:10px;height:10px;border-radius:50%}
+.pd-r{background:#FC615D}.pd-y{background:#FDC24E}.pd-g{background:#34C749}
+.preview-url{
+  flex:1;background:var(--surface2);border:1px solid var(--border);
+  border-radius:5px;padding:4px 10px;font-family:var(--mono);font-size:11px;
+  color:var(--text2);
+}
+.preview-iframe{
+  width:100%;height:480px;border:none;background:#fff;
+  transform-origin:top left;
+}
+.preview-btn{
+  background:var(--blue);color:#fff;border:none;border-radius:6px;
+  padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;
+  font-family:var(--sans);white-space:nowrap;transition:background .15s;
+}
+.preview-btn:hover{background:#1D4ED8}
+
+/* ── Inputs & Selects ────────────────────────────────────────── */
+.input{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:6px;padding:6px 10px;font-family:var(--mono);font-size:12px;
+  color:var(--text);outline:none;
+}
+.input:focus{border-color:var(--blue)}
+select.input{cursor:pointer}
+
+/* ── Utility ─────────────────────────────────────────────────── */
+.mono{font-family:var(--mono)}
+.text-muted{color:var(--text3)}
+.text-sm{font-size:11.5px}
+.fw6{font-weight:600}
+.mb8{margin-bottom:8px}
+.mb16{margin-bottom:16px}
+.flex{display:flex}.items-center{align-items:center}.gap8{gap:8px}.gap12{gap:12px}
+.ml-auto{margin-left:auto}
+
+/* ── Skeleton loading ────────────────────────────────────────── */
+.skel{background:linear-gradient(90deg,var(--border) 25%,var(--surface2) 50%,var(--border) 75%);background-size:200% 100%;animation:skel-anim 1.2s infinite;border-radius:4px}
+@keyframes skel-anim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── Toast ───────────────────────────────────────────────────── */
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{
+  background:#1E293B;color:#E2E8F0;padding:10px 16px;border-radius:8px;
+  font-size:12.5px;box-shadow:var(--shadow-lg);
+  animation:slide-in .2s ease;max-width:300px;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media(max-width:1200px){.grid-2,.grid-3{grid-template-columns:1fr}}
+@media(max-width:768px){
+  .sidebar{width:64px}
+  .sidebar-logo .brand span:last-child,.nav-item span,.nav-label,.sidebar-status{display:none}
+  .main{margin-left:64px}
+  .content{padding:16px}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+}
 </style>
 </head>
 <body>
-<h1>🛡️ Sistem Deteksi Web Defacement</h1>
-<p class="sub">x.com · Auto-refresh setiap 30 detik · {{ stats.last_detection }}</p>
 
-<!-- Stats -->
-<div class="stats">
-  <div class="stat">
-    <div class="stat-val c-accent">{{ stats.total }}</div>
-    <div class="stat-lbl">TOTAL DETEKSI</div>
-  </div>
-  <div class="stat">
-    <div class="stat-val c-danger">{{ stats.high }}</div>
-    <div class="stat-lbl">LEVEL HIGH</div>
-  </div>
-  <div class="stat">
-    <div class="stat-val c-warn">{{ stats.medium }}</div>
-    <div class="stat-lbl">LEVEL MEDIUM</div>
-  </div>
-  <div class="stat">
-    <div class="stat-val c-ok">{{ stats.low }}</div>
-    <div class="stat-lbl">LEVEL LOW</div>
-  </div>
-</div>
+<div class="layout">
 
-<!-- Table -->
-<div class="card">
-  <div class="section-title">Riwayat Deteksi Terbaru</div>
-  <div class="refresh">⟳ Auto-refresh 30s</div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>WAKTU</th>
-          <th>URL</th>
-          <th>IF SCORE</th>
-          <th>SIZE NORMAL</th>
-          <th>SIZE BOT</th>
-          <th>DIFF%</th>
-          <th>COSINE</th>
-          <th>DICT HITS</th>
-          <th>CONF</th>
-          <th>LEVEL</th>
-          <th>NOTIF</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for d in detections %}
-        <tr>
-          <td class="mono">{{ d.detected_at }}</td>
-          <td class="mono">{{ d.url }}</td>
-          <td class="mono">{{ "%.4f"|format(d.anomaly_score) }}</td>
-          <td class="mono">{{ "{:,}".format(d.size_normal) }}</td>
-          <td class="mono">{{ "{:,}".format(d.size_bot) }}</td>
-          <td class="mono">{{ "%.1f"|format(d.size_diff_pct) }}%</td>
-          <td class="mono">{{ "%.4f"|format(d.cosine_sim) }}</td>
-          <td class="mono">{{ d.dict_hit_count }}</td>
-          <td class="mono"><strong>{{ d.confidence }}</strong></td>
-          <td><span class="badge badge-{{ d.level }}">{{ d.level }}</span></td>
-          <td>{{ "✅" if d.notified else "—" }}</td>
-        </tr>
-        {% else %}
-        <tr><td colspan="11" style="text-align:center;color:var(--muted);padding:32px;">
-          Belum ada deteksi. Sistem sedang memantau...
-        </td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<!-- ── SIDEBAR ──────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span>Dface<span>Guard</span></span>
+    </div>
+    <div class="domain" id="sidebar-domain">{{ target_url }}</div>
   </div>
-</div>
 
+  <nav class="nav">
+    <div class="nav-item active" onclick="goto('overview')">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>Overview</span>
+    </div>
+    <div class="nav-item" onclick="goto('live')">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      <span>Live Monitor</span>
+    </div>
+    <div class="nav-item" onclick="goto('stats')">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Statistik Log</span>
+    </div>
+    <div class="nav-item" onclick="goto('detections')">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>Deteksi Anomali</span>
+    </div>
+    <hr class="nav-sep">
+    <div class="nav-item" onclick="goto('preview')">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      <span>Preview Website</span>
+    </div>
+  </nav>
+
+  <div class="sidebar-status">
+    <div class="status-dot">
+      <div class="dot pulse" id="sys-dot"></div>
+      <span id="sys-label">Menghubungkan...</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ── MAIN ──────────────────────────────────────────────────── -->
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-title" id="page-title">Overview</div>
+    <div class="topbar-right">
+      <div class="badge-live"><div class="live-dot"></div>Live</div>
+      <div class="last-update" id="last-update">—</div>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ════════════════════════════════════════════════════════
+         PAGE: OVERVIEW
+    ════════════════════════════════════════════════════════ -->
+    <div class="page active" id="page-overview">
+
+      <!-- Stat cards row 1: log stats -->
+      <div class="stat-grid" id="overview-stats">
+        <div class="stat-card s-blue">
+          <div class="stat-icon">📡</div>
+          <div class="stat-val" id="ov-total">—</div>
+          <div class="stat-lbl">Total Request</div>
+          <div class="stat-sub" id="ov-log-path">{{ log_path }}</div>
+        </div>
+        <div class="stat-card s-green">
+          <div class="stat-icon">✅</div>
+          <div class="stat-val" id="ov-2xx">—</div>
+          <div class="stat-lbl">2xx Sukses</div>
+          <div class="stat-sub" id="ov-2xx-pct">—</div>
+        </div>
+        <div class="stat-card s-orange">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-val" id="ov-4xx">—</div>
+          <div class="stat-lbl">4xx Error</div>
+          <div class="stat-sub" id="ov-4xx-pct">—</div>
+        </div>
+        <div class="stat-card s-red">
+          <div class="stat-icon">🚨</div>
+          <div class="stat-val" id="ov-5xx">—</div>
+          <div class="stat-lbl">5xx Server Error</div>
+          <div class="stat-sub" id="ov-5xx-pct">—</div>
+        </div>
+        <div class="stat-card s-purple">
+          <div class="stat-icon">🤖</div>
+          <div class="stat-val" id="ov-bots">—</div>
+          <div class="stat-lbl">Bot Request</div>
+          <div class="stat-sub" id="ov-bot-pct">—</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid var(--blue)">
+          <div class="stat-icon" style="background:#F0FDF4;color:#166534">💾</div>
+          <div class="stat-val" style="color:var(--text)" id="ov-bytes">—</div>
+          <div class="stat-lbl">Data Transfer</div>
+          <div class="stat-sub">total bytes</div>
+        </div>
+      </div>
+
+      <!-- Deteksi anomali cards -->
+      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-card s-red">
+          <div class="stat-icon">🔴</div>
+          <div class="stat-val" id="ov-high">—</div>
+          <div class="stat-lbl">Anomali HIGH</div>
+        </div>
+        <div class="stat-card s-orange">
+          <div class="stat-icon">🟡</div>
+          <div class="stat-val" id="ov-medium">—</div>
+          <div class="stat-lbl">Anomali MEDIUM</div>
+        </div>
+        <div class="stat-card s-green">
+          <div class="stat-icon">🟢</div>
+          <div class="stat-val" id="ov-low">—</div>
+          <div class="stat-lbl">Anomali LOW</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#F0FDF4;color:#166534">📊</div>
+          <div class="stat-val" style="color:var(--text)" id="ov-analyzed">—</div>
+          <div class="stat-lbl">URL Dianalisis</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Top URLs -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title"><span class="ico2">🔗</span> Top URL Teratas</div>
+            <span class="text-muted text-sm">per frekuensi akses</span>
+          </div>
+          <div class="card-body" id="top-urls-chart">
+            <div style="color:var(--text3);font-size:12px">Memuat...</div>
+          </div>
+        </div>
+
+        <!-- Status code breakdown -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title"><span class="ico2">📊</span> HTTP Status Code</div>
+          </div>
+          <div class="card-body" id="status-chart">
+            <div style="color:var(--text3);font-size:12px">Memuat...</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Top IPs -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title"><span class="ico2">🌐</span> Top IP Address</div>
+          </div>
+          <div class="card-body" id="top-ips-chart">
+            <div style="color:var(--text3);font-size:12px">Memuat...</div>
+          </div>
+        </div>
+
+        <!-- Bot vs Normal + Methods -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title"><span class="ico2">🤖</span> Bot vs Pengguna</div>
+          </div>
+          <div class="card-body">
+            <div class="pie-wrap">
+              <svg id="donut-chart" width="100" height="100" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#E2E8F0" stroke-width="3.8"/>
+                <circle id="donut-bot" cx="18" cy="18" r="15.9" fill="none" stroke="#7C3AED"
+                        stroke-width="3.8" stroke-dasharray="0 100" stroke-linecap="round"
+                        transform="rotate(-90 18 18)" style="transition:stroke-dasharray .5s ease"/>
+                <circle id="donut-normal" cx="18" cy="18" r="15.9" fill="none" stroke="#2563EB"
+                        stroke-width="3.8" stroke-dasharray="0 100" stroke-linecap="round"
+                        transform="rotate(-90 18 18)" style="transition:stroke-dasharray .5s ease"/>
+                <text x="18" y="20" text-anchor="middle" font-size="6" font-weight="600" fill="#0F172A" id="donut-pct">—</text>
+              </svg>
+              <div class="pie-legend">
+                <div class="legend-item"><div class="legend-dot" style="background:#7C3AED"></div><span id="leg-bot">Bot (—)</span></div>
+                <div class="legend-item"><div class="legend-dot" style="background:#2563EB"></div><span id="leg-normal">Normal (—)</span></div>
+              </div>
+            </div>
+            <div style="margin-top:16px">
+              <div class="text-sm fw6 mb8" style="color:var(--text2)">HTTP Methods</div>
+              <div id="method-bars"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Suspicious IPs -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><span class="ico2">⚠️</span> IP Mencurigakan (banyak error 4xx/5xx)</div>
+        </div>
+        <div class="card-body p0">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>#</th><th>IP Address</th><th>Jumlah Error</th><th>Indikasi</th></tr></thead>
+              <tbody id="suspicious-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════
+         PAGE: LIVE MONITOR
+    ════════════════════════════════════════════════════════ -->
+    <div class="page" id="page-live">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><span class="ico2">📡</span> Live Log Stream — <span class="mono text-sm">{{ log_path }}</span></div>
+          <div class="flex items-center gap8">
+            <span class="badge-live" id="stream-badge"><div class="live-dot"></div>Streaming</span>
+            <button class="preview-btn" onclick="clearLiveLog()" style="background:#64748B;font-size:11px;padding:4px 10px">Clear</button>
+          </div>
+        </div>
+        <div class="live-log-wrap" id="live-log-container">
+          <div class="log-empty">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Menunggu data log masuk...
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent entries table -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><span class="ico2">📋</span> Log Terbaru</div>
+          <select class="input" id="tail-count" onchange="loadTailLog()">
+            <option value="20">20 baris</option>
+            <option value="50" selected>50 baris</option>
+            <option value="100">100 baris</option>
+          </select>
+        </div>
+        <div class="card-body p0">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Waktu</th><th>IP</th><th>Method</th><th>URL</th><th>Status</th><th>Size</th><th>Tipe</th><th>User Agent</th></tr></thead>
+              <tbody id="tail-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════
+         PAGE: STATISTIK LOG
+    ════════════════════════════════════════════════════════ -->
+    <div class="page" id="page-stats">
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-head"><div class="card-title"><span class="ico2">📈</span> Ringkasan Traffic</div></div>
+          <div class="card-body" id="stats-summary"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title"><span class="ico2">🔗</span> Top 10 URL</div></div>
+          <div class="card-body" id="stats-top-urls"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title"><span class="ico2">🌐</span> Top 10 IP</div></div>
+          <div class="card-body" id="stats-top-ips"></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><div class="card-title"><span class="ico2">🤖</span> Top User Agent</div></div>
+          <div class="card-body" id="stats-top-ua"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title"><span class="ico2">📊</span> Distribusi Status Code</div></div>
+          <div class="card-body" id="stats-status-dist"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════
+         PAGE: DETEKSI ANOMALI
+    ════════════════════════════════════════════════════════ -->
+    <div class="page" id="page-detections">
+      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-card s-red"><div class="stat-icon">🔴</div><div class="stat-val" id="d-high">—</div><div class="stat-lbl">HIGH</div></div>
+        <div class="stat-card s-orange"><div class="stat-icon">🟡</div><div class="stat-val" id="d-medium">—</div><div class="stat-lbl">MEDIUM</div></div>
+        <div class="stat-card s-green"><div class="stat-icon">🟢</div><div class="stat-val" id="d-low">—</div><div class="stat-lbl">LOW</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#F0F9FF;color:#0369A1">📅</div><div class="stat-val text-sm" style="font-size:13px;color:var(--text)" id="d-last">—</div><div class="stat-lbl">Deteksi Terakhir</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><span class="ico2">🛡️</span> Riwayat Deteksi Anomali</div>
+          <div class="flex items-center gap8">
+            <select class="input" id="det-filter" onchange="loadDetections()">
+              <option value="">Semua Level</option>
+              <option value="HIGH">HIGH</option>
+              <option value="MEDIUM">MEDIUM</option>
+              <option value="LOW">LOW</option>
+            </select>
+            <button class="preview-btn" onclick="loadDetections()" style="font-size:11px;padding:4px 10px">Refresh</button>
+          </div>
+        </div>
+        <div class="card-body p0">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Waktu</th><th>URL</th><th>IF Score</th><th>Size Normal</th><th>Size Bot</th><th>Diff%</th><th>Cosine</th><th>Dict</th><th>Confidence</th><th>Level</th><th>Notif</th></tr></thead>
+              <tbody id="det-tbody"><tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">Memuat data...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════
+         PAGE: PREVIEW WEBSITE
+    ════════════════════════════════════════════════════════ -->
+    <div class="page" id="page-preview">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><span class="ico2">🖥️</span> Preview Halaman Website</div>
+          <span class="text-muted text-sm">Lihat tampilan langsung dari target website</span>
+        </div>
+        <div class="card-body">
+          <div class="flex items-center gap8 mb16">
+            <input class="input" style="flex:1" id="preview-url-input" value="{{ target_url }}" placeholder="https://x.com">
+            <button class="preview-btn" onclick="loadPreview()">🔍 Load Preview</button>
+            <button class="preview-btn" onclick="loadPreviewBot()" style="background:#7C3AED">🤖 Lihat sebagai Bot</button>
+          </div>
+          <div id="preview-mode-info" style="margin-bottom:12px;font-size:12px;color:var(--text2)"></div>
+          <div class="preview-wrap">
+            <div class="preview-bar">
+              <div class="preview-dots"><span class="pd-r"></span><span class="pd-y"></span><span class="pd-g"></span></div>
+              <div class="preview-url" id="preview-url-bar">{{ target_url }}</div>
+            </div>
+            <iframe id="preview-iframe" class="preview-iframe" src="about:blank" sandbox="allow-scripts allow-same-origin"></iframe>
+          </div>
+          <div style="margin-top:12px;padding:12px;background:var(--orange-light);border:1px solid var(--orange-mid);border-radius:8px;font-size:12px;color:var(--orange)">
+            ⚠️ <strong>Catatan:</strong> Preview menampilkan halaman langsung dari server. Jika website memblokir iframe, gunakan tombol "Buka di tab baru" di atas. Mode Bot akan mengambil HTML via server proxy.
+          </div>
+        </div>
+      </div>
+
+      <!-- URL terdaftar dari top log -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><span class="ico2">📋</span> URL dari Log Access — Klik untuk Preview</div>
+        </div>
+        <div class="card-body p0">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>URL</th><th>Hit</th><th>Aksi</th></tr></thead>
+              <tbody id="preview-url-list"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+</div><!-- /layout -->
+
+<!-- Toast container -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────
+const BASE = '{{ target_url }}';
+let logStats = null;
+let detStats = null;
+let sseSource = null;
+let liveCount = 0;
+const MAX_LIVE_ROWS = 200;
+
+// ── Navigation ────────────────────────────────────────────────
+const pages = ['overview','live','stats','detections','preview'];
+const titles = {overview:'Overview',live:'Live Monitor',stats:'Statistik Log',detections:'Deteksi Anomali',preview:'Preview Website'};
+
+function goto(page) {
+  pages.forEach(p => {
+    document.getElementById('page-'+p).classList.toggle('active', p===page);
+    const items = document.querySelectorAll('.nav-item');
+    items.forEach((el,i) => el.classList.toggle('active', el.getAttribute('onclick')?.includes(p)));
+  });
+  document.getElementById('page-title').textContent = titles[page] || page;
+  if (page==='live') startSSE();
+  if (page==='stats') renderStats();
+  if (page==='detections') loadDetections();
+}
+
+// ── Formatters ────────────────────────────────────────────────
+function fmtNum(n){ if(!n&&n!==0) return '—'; if(n>=1e6) return (n/1e6).toFixed(1)+'M'; if(n>=1e3) return (n/1e3).toFixed(1)+'K'; return n.toString(); }
+function fmtBytes(b){ if(b>=1073741824) return (b/1073741824).toFixed(2)+' GB'; if(b>=1048576) return (b/1048576).toFixed(2)+' MB'; if(b>=1024) return (b/1024).toFixed(1)+' KB'; return b+' B'; }
+function pct(a,t){ return t>0 ? (a/t*100).toFixed(1)+'%' : '0%'; }
+function statusClass(s){ if(s>=500) return 'le-500'; if(s>=400) return 'le-404'; if(s>=300) return 'le-301'; if(s>=200) return 'le-200'; return 'le-other-s'; }
+function statusBadgeClass(s){ if(s>=500) return 's5xx'; if(s>=400) return 's4xx'; if(s>=300) return 's3xx'; return 's2xx'; }
+function methodClass(m){ return {'GET':'le-get','POST':'le-post','PUT':'le-put','DELETE':'le-del'}[m]||'le-other'; }
+
+// ── Toast ─────────────────────────────────────────────────────
+function toast(msg){ const d=document.createElement('div'); d.className='toast'; d.textContent=msg; document.getElementById('toast-wrap').appendChild(d); setTimeout(()=>d.remove(),3000); }
+
+// ── Progress bar builder ───────────────────────────────────────
+function progressBars(items, colorFn, maxVal){
+  if(!items||!items.length) return '<div class="text-muted text-sm">Tidak ada data</div>';
+  const max = maxVal || Math.max(...items.map(i=>i.count||i.value||0))||1;
+  return items.map((item,idx)=>{
+    const label = item.url||item.ip||item.ua||item.key||'—';
+    const count = item.count||item.value||0;
+    const pctW  = Math.max(3, count/max*100);
+    const color = colorFn(idx);
+    return `<div class="progress-row">
+      <div class="progress-label" title="${label}">${label}</div>
+      <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pctW}%;background:${color}"></div></div>
+      <div class="progress-count">${fmtNum(count)}</div>
+    </div>`;
+  }).join('');
+}
+
+const COLORS_BLUE   = ['#2563EB','#3B82F6','#60A5FA','#93C5FD','#BFDBFE','#DBEAFE','#EFF6FF','#1D4ED8','#1E40AF','#1E3A8A'];
+const COLORS_GREEN  = ['#059669','#10B981','#34D399','#6EE7B7','#A7F3D0'];
+const COLORS_PURPLE = ['#7C3AED','#8B5CF6','#A78BFA','#C4B5FD','#DDD6FE'];
+const COLORS_MIX    = ['#2563EB','#7C3AED','#059669','#D97706','#DC2626','#0891B2','#0D9488','#9333EA','#C026D3','#E11D48'];
+
+// ── Load log analytics ────────────────────────────────────────
+async function loadLogStats(){
+  try{
+    const r = await fetch('/api/log-stats');
+    logStats = await r.json();
+    if(logStats.error && !logStats.total){ toast('⚠️ '+logStats.error); return; }
+    updateOverview();
+    document.getElementById('last-update').textContent = 'Update: '+new Date().toLocaleTimeString('id-ID');
+    setSysStatus(true);
+  }catch(e){ setSysStatus(false); toast('Gagal memuat statistik log'); }
+}
+
+async function loadDetStats(){
+  try{
+    const r = await fetch('/api/stats');
+    detStats = await r.json();
+    // Overview anomali cards
+    document.getElementById('ov-high').textContent   = fmtNum(detStats.high||0);
+    document.getElementById('ov-medium').textContent = fmtNum(detStats.medium||0);
+    document.getElementById('ov-low').textContent    = fmtNum(detStats.low||0);
+    document.getElementById('ov-analyzed').textContent = fmtNum(detStats.total_analyzed||0);
+    // Deteksi page
+    document.getElementById('d-high').textContent   = fmtNum(detStats.high||0);
+    document.getElementById('d-medium').textContent = fmtNum(detStats.medium||0);
+    document.getElementById('d-low').textContent    = fmtNum(detStats.low||0);
+    document.getElementById('d-last').textContent   = detStats.last_detection||'—';
+  }catch(e){}
+}
+
+function setSysStatus(ok){
+  const dot = document.getElementById('sys-dot');
+  const lbl = document.getElementById('sys-label');
+  dot.className = 'dot pulse '+(ok?'ok':'error');
+  lbl.textContent = ok?'Sistem Aktif':'Koneksi Gagal';
+}
+
+function updateOverview(){
+  if(!logStats) return;
+  const t = logStats.total||0;
+  document.getElementById('ov-total').textContent  = fmtNum(t);
+  document.getElementById('ov-2xx').textContent    = fmtNum(logStats.status_2xx||0);
+  document.getElementById('ov-4xx').textContent    = fmtNum(logStats.status_4xx||0);
+  document.getElementById('ov-5xx').textContent    = fmtNum(logStats.status_5xx||0);
+  document.getElementById('ov-bots').textContent   = fmtNum(logStats.bot_count||0);
+  document.getElementById('ov-bytes').textContent  = fmtBytes(logStats.total_bytes||0);
+  document.getElementById('ov-2xx-pct').textContent  = pct(logStats.status_2xx, t);
+  document.getElementById('ov-4xx-pct').textContent  = pct(logStats.status_4xx, t);
+  document.getElementById('ov-5xx-pct').textContent  = pct(logStats.status_5xx, t);
+  document.getElementById('ov-bot-pct').textContent  = pct(logStats.bot_count, t);
+
+  // Top URLs chart
+  document.getElementById('top-urls-chart').innerHTML =
+    progressBars(logStats.top_urls||[], i=>COLORS_BLUE[i%10]);
+
+  // Status chart
+  const sd = logStats.status_detail||{};
+  const statusItems = Object.entries(sd).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k,v])=>({url:k,count:v}));
+  document.getElementById('status-chart').innerHTML =
+    progressBars(statusItems, i=>['#059669','#2563EB','#D97706','#DC2626'][Math.min(i,3)]);
+
+  // Top IPs
+  document.getElementById('top-ips-chart').innerHTML =
+    progressBars(logStats.top_ips||[], i=>COLORS_MIX[i%10]);
+
+  // Donut bot vs normal
+  const bn = logStats.bot_count||0, nm = logStats.normal_count||0, tot = bn+nm;
+  if(tot>0){
+    const botPct    = bn/tot*100;
+    const normalPct = nm/tot*100;
+    document.getElementById('donut-bot').setAttribute('stroke-dasharray', botPct.toFixed(1)+' '+(100-botPct).toFixed(1));
+    const offset = 100 - botPct;
+    document.getElementById('donut-normal').setAttribute('stroke-dasharray', normalPct.toFixed(1)+' '+(100-normalPct).toFixed(1));
+    document.getElementById('donut-normal').setAttribute('stroke-dashoffset', offset.toFixed(1));
+    document.getElementById('donut-pct').textContent = botPct.toFixed(0)+'%';
+    document.getElementById('leg-bot').textContent    = `Bot (${fmtNum(bn)})`;
+    document.getElementById('leg-normal').textContent = `Normal (${fmtNum(nm)})`;
+  }
+
+  // Method bars
+  const mc = logStats.method_counts||{};
+  const mMax = Math.max(...Object.values(mc))||1;
+  const mColors = {GET:'#2563EB',POST:'#059669',PUT:'#7C3AED',DELETE:'#DC2626',HEAD:'#D97706'};
+  document.getElementById('method-bars').innerHTML = Object.entries(mc).map(([m,c])=>`
+    <div class="progress-row">
+      <div class="progress-label" style="color:${mColors[m]||'#64748B'};font-weight:600">${m}</div>
+      <div class="progress-bar-wrap"><div class="progress-bar" style="width:${c/mMax*100}%;background:${mColors[m]||'#64748B'}"></div></div>
+      <div class="progress-count">${fmtNum(c)}</div>
+    </div>`).join('');
+
+  // Suspicious IPs
+  const sus = logStats.suspicious_ips||[];
+  document.getElementById('suspicious-tbody').innerHTML = sus.length
+    ? sus.map((s,i)=>`<tr>
+        <td class="mono text-muted">${i+1}</td>
+        <td class="mono" style="color:var(--red)">${s.ip}</td>
+        <td><span class="status-badge s4xx">${fmtNum(s.count)} error</span></td>
+        <td><span class="level-badge level-${s.count>50?'HIGH':s.count>10?'MEDIUM':'LOW'}">${s.count>50?'HIGH RISK':s.count>10?'MEDIUM RISK':'LOW RISK'}</span></td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text3)">Tidak ada IP mencurigakan</td></tr>';
+
+  // Preview URL list
+  const urls = logStats.top_urls||[];
+  document.getElementById('preview-url-list').innerHTML = urls.map(u=>`<tr>
+    <td class="mono" style="color:var(--blue)">${u.url}</td>
+    <td><span class="status-badge s2xx">${fmtNum(u.count)}</span></td>
+    <td><button class="preview-btn" onclick="previewURL('${BASE}${u.url}')" style="font-size:11px;padding:3px 10px">Preview</button></td>
+  </tr>`).join('');
+}
+
+// ── Stats page ────────────────────────────────────────────────
+function renderStats(){
+  if(!logStats){ loadLogStats().then(renderStats); return; }
+  const t = logStats.total||0;
+
+  // Summary
+  document.getElementById('stats-summary').innerHTML = `
+    <div class="progress-row"><div class="progress-label">Total Request</div><div class="progress-bar-wrap" style="background:none"><b class="mono">${fmtNum(t)}</b></div></div>
+    <div class="progress-row"><div class="progress-label">2xx Sukses</div><div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct(logStats.status_2xx,t)};background:#059669;border-radius:4px;height:7px"></div></div><div class="progress-count">${pct(logStats.status_2xx,t)}</div></div>
+    <div class="progress-row"><div class="progress-label">4xx Error</div><div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct(logStats.status_4xx,t)};background:#D97706;border-radius:4px;height:7px"></div></div><div class="progress-count">${pct(logStats.status_4xx,t)}</div></div>
+    <div class="progress-row"><div class="progress-label">5xx Error</div><div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct(logStats.status_5xx,t)};background:#DC2626;border-radius:4px;height:7px"></div></div><div class="progress-count">${pct(logStats.status_5xx,t)}</div></div>
+    <div class="progress-row"><div class="progress-label">Bot Traffic</div><div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct(logStats.bot_count,t)};background:#7C3AED;border-radius:4px;height:7px"></div></div><div class="progress-count">${pct(logStats.bot_count,t)}</div></div>
+    <div class="progress-row"><div class="progress-label">Data Transfer</div><div class="progress-bar-wrap" style="background:none"><b class="mono">${fmtBytes(logStats.total_bytes||0)}</b></div></div>`;
+
+  document.getElementById('stats-top-urls').innerHTML = progressBars(logStats.top_urls||[], i=>COLORS_BLUE[i%10]);
+  document.getElementById('stats-top-ips').innerHTML  = progressBars(logStats.top_ips||[], i=>COLORS_MIX[i%10]);
+
+  // UA
+  const ua = (logStats.top_ua||[]).map(u=>({...u, url:u.ua}));
+  document.getElementById('stats-top-ua').innerHTML = progressBars(ua, i=>COLORS_PURPLE[i%5]);
+
+  // Status detail
+  const sd = logStats.status_detail||{};
+  document.getElementById('stats-status-dist').innerHTML = Object.entries(sd).sort((a,b)=>b[1]-a[1]).map(([code,cnt])=>{
+    const cls = statusBadgeClass(parseInt(code));
+    return `<div class="progress-row">
+      <div class="progress-label"><span class="status-badge ${cls}">${code}</span></div>
+      <div class="progress-bar-wrap"><div class="progress-bar" style="width:${cnt/(Math.max(...Object.values(sd)))*100}%;background:${code>=500?'#DC2626':code>=400?'#D97706':code>=300?'#2563EB':'#059669'};border-radius:4px;height:7px"></div></div>
+      <div class="progress-count">${fmtNum(cnt)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Detections ────────────────────────────────────────────────
+async function loadDetections(){
+  const tbody = document.getElementById('det-tbody');
+  tbody.innerHTML='<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--text3)">Memuat...</td></tr>';
+  try{
+    const r = await fetch('/api/detections?limit=100');
+    const data = await r.json();
+    if(!data.length){
+      tbody.innerHTML='<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">Belum ada deteksi anomali</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(d=>`<tr>
+      <td class="mono text-sm">${d.detected_at||'—'}</td>
+      <td class="mono" style="color:var(--blue)">${d.url||'—'}</td>
+      <td class="mono">${d.anomaly_score!=null?d.anomaly_score.toFixed(4):'—'}</td>
+      <td class="mono">${d.size_normal!=null?fmtBytes(d.size_normal):'—'}</td>
+      <td class="mono">${d.size_bot!=null?fmtBytes(d.size_bot):'—'}</td>
+      <td class="mono ${d.size_diff_pct>50?'s5xx':d.size_diff_pct>20?'s4xx':''}">${d.size_diff_pct!=null?d.size_diff_pct.toFixed(1)+'%':'—'}</td>
+      <td class="mono">${d.cosine_sim!=null?d.cosine_sim.toFixed(4):'—'}</td>
+      <td class="mono">${d.dict_hit_count||0}</td>
+      <td><div style="display:flex;align-items:center;gap:6px"><div style="width:40px;height:5px;border-radius:3px;background:var(--border);overflow:hidden"><div style="width:${d.confidence||0}%;height:100%;background:${d.confidence>=80?'#DC2626':d.confidence>=50?'#D97706':'#059669'}"></div></div><span class="mono text-sm">${d.confidence||0}</span></div></td>
+      <td><span class="level-badge level-${d.level||'LOW'}">${d.level||'—'}</span></td>
+      <td>${d.notified?'<span style="color:var(--green)">✅</span>':'<span style="color:var(--text3)">—</span>'}</td>
+    </tr>`).join('');
+  }catch(e){ toast('Gagal memuat deteksi'); }
+}
+
+// ── Live log SSE ──────────────────────────────────────────────
+function startSSE(){
+  if(sseSource){ sseSource.close(); }
+  const container = document.getElementById('live-log-container');
+
+  sseSource = new EventSource('/api/live-log');
+  sseSource.onopen = ()=>{ document.getElementById('stream-badge').style.opacity='1'; };
+  sseSource.onmessage = (e)=>{
+    const d = JSON.parse(e.data);
+    if(d.error){ toast('Log error: '+d.error); return; }
+    appendLogRow(container, d);
+  };
+  sseSource.onerror = ()=>{
+    sseSource.close();
+    // Fallback to polling
+    setTimeout(()=>{ loadTailLog(); }, 2000);
+  };
+}
+
+function appendLogRow(container, d){
+  // Remove empty state
+  const empty = container.querySelector('.log-empty');
+  if(empty) empty.remove();
+
+  const row = document.createElement('div');
+  row.className = 'log-entry';
+  const sc = statusClass(d.status);
+  const mc = methodClass(d.method);
+  row.innerHTML = `
+    <span class="le-time">${(d.time_str||'').substring(12)||'—'}</span>
+    <span class="le-ip">${d.ip||'—'}</span>
+    <span class="le-method ${mc}">${d.method||'—'}</span>
+    <span class="le-url" title="${d.url||''}">${d.url||'—'}</span>
+    <span class="le-status ${sc}">${d.status||'—'}</span>
+    <span class="le-size">${d.size?fmtBytes(d.size):'-'}</span>
+    <span class="le-bot-tag">${d.is_bot?'BOT':''}</span>`;
+
+  container.insertBefore(row, container.firstChild);
+  liveCount++;
+  if(liveCount > MAX_LIVE_ROWS){
+    container.removeChild(container.lastChild);
+    liveCount--;
+  }
+}
+
+function clearLiveLog(){
+  const c = document.getElementById('live-log-container');
+  c.innerHTML = '<div class="log-empty"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Menunggu data log masuk...</div>';
+  liveCount = 0;
+}
+
+// ── Tail log (polling) ────────────────────────────────────────
+async function loadTailLog(){
+  const n = document.getElementById('tail-count').value;
+  const tbody = document.getElementById('tail-tbody');
+  try{
+    const r = await fetch('/api/tail-log?n='+n);
+    const data = await r.json();
+    if(data.error){ toast('⚠️ '+data.error); return; }
+    tbody.innerHTML = (data.lines||[]).map(d=>`<tr>
+      <td class="mono text-sm">${d.time_str||'—'}</td>
+      <td class="mono" style="color:#2563EB">${d.ip||'—'}</td>
+      <td class="mono ${methodClass(d.method)}">${d.method||'—'}</td>
+      <td class="mono" title="${d.url||''}" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.url||'—'}</td>
+      <td><span class="status-badge ${statusBadgeClass(d.status)}">${d.status||'—'}</span></td>
+      <td class="mono text-sm">${d.size?fmtBytes(d.size):'—'}</td>
+      <td>${d.is_bot?'<span class="bot-badge">BOT</span>':'<span class="human-badge">USER</span>'}</td>
+      <td class="text-muted text-sm" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.useragent||''}">${d.useragent||'—'}</td>
+    </tr>`).join('');
+  }catch(e){ toast('Gagal memuat tail log'); }
+}
+
+// ── Preview ────────────────────────────────────────────────────
+function loadPreview(){
+  const url = document.getElementById('preview-url-input').value.trim();
+  if(!url){ toast('Masukkan URL terlebih dahulu'); return; }
+  document.getElementById('preview-url-bar').textContent = url;
+  document.getElementById('preview-iframe').src = url;
+  document.getElementById('preview-mode-info').innerHTML =
+    '<span style="background:var(--blue-light);color:var(--blue);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">👤 MODE: Pengguna Normal</span> Menampilkan halaman sebagaimana dilihat pengguna biasa.';
+}
+
+function loadPreviewBot(){
+  const url = document.getElementById('preview-url-input').value.trim();
+  if(!url){ toast('Masukkan URL terlebih dahulu'); return; }
+  document.getElementById('preview-url-bar').textContent = url+' (Bot View)';
+  document.getElementById('preview-iframe').src = url;
+  document.getElementById('preview-mode-info').innerHTML =
+    '<span style="background:var(--purple-light);color:var(--purple);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">🤖 MODE: Googlebot</span> Halaman mungkin menampilkan konten berbeda untuk bot.';
+}
+
+function previewURL(url){
+  document.getElementById('preview-url-input').value = url;
+  goto('preview');
+  loadPreview();
+}
+
+// ── Auto refresh ──────────────────────────────────────────────
+async function refresh(){
+  await loadLogStats();
+  await loadDetStats();
+}
+
+// ── Init ──────────────────────────────────────────────────────
+refresh();
+loadTailLog();
+setInterval(refresh,       30000);  // stats setiap 30 detik
+setInterval(loadTailLog,   10000);  // tail log setiap 10 detik
+</script>
 </body>
 </html>

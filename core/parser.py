@@ -1,21 +1,13 @@
-"""
-core/parser.py
-Parsing Nginx access.log (Combined Log Format) dan rekayasa fitur
-berbasis perbedaan response size antara akses normal dan bot.
-
-Format log Nginx (Combined):
-  $remote_addr - $remote_user [$time_local] "$request"
-  $status $body_bytes_sent "$http_referer" "$http_user_agent"
-"""
+"""core/parser.py — Parsing Nginx access.log + analitik lengkap"""
 import re
+from datetime import datetime
+from collections import defaultdict
 import pandas as pd
-import numpy as np
 from config.settings import STATIC_EXT, BOT_KEYWORDS
 from config.logger import get_logger
 
 logger = get_logger("parser")
 
-# Pola regex Combined Log Format — identik antara Nginx dan Apache CLF
 LOG_PATTERN = re.compile(
     r'(?P<ip>\S+) \S+ \S+ \[(?P<time>[^\]]+)\] '
     r'"(?P<method>\S+) (?P<url>\S+) \S+" '
@@ -23,102 +15,155 @@ LOG_PATTERN = re.compile(
     r'"(?P<referrer>[^"]*)" "(?P<useragent>[^"]*)"'
 )
 
-
 def is_bot(ua: str) -> bool:
-    """Deteksi apakah user-agent adalah bot mesin pencari."""
     ua_lower = ua.lower()
     return any(k in ua_lower for k in BOT_KEYWORDS)
 
-
 def is_static(url: str) -> bool:
-    """Filter URL resource statis yang tidak relevan dianalisis."""
     return any(url.lower().split("?")[0].endswith(e) for e in STATIC_EXT)
 
+def parse_time(time_str: str):
+    try:
+        return datetime.strptime(time_str.split()[0], "%d/%b/%Y:%H:%M:%S")
+    except:
+        return None
 
 def parse_line(line: str) -> dict | None:
-    """
-    Parse satu baris log Nginx → dict atribut.
-    Return None jika format tidak cocok.
-    """
     m = LOG_PATTERN.match(line.strip())
-    if not m:
-        return None
+    if not m: return None
     size = m.group("size")
+    dt   = parse_time(m.group("time"))
+    ua   = m.group("useragent")
     return {
         "ip":        m.group("ip"),
+        "time":      dt,
+        "time_str":  m.group("time").split()[0],
+        "method":    m.group("method"),
         "url":       m.group("url").split("?")[0].rstrip("/") or "/",
+        "url_full":  m.group("url"),
         "status":    int(m.group("status")),
         "size":      int(size) if size.isdigit() else 0,
-        "useragent": m.group("useragent"),
-        "is_bot":    is_bot(m.group("useragent")),
+        "referrer":  m.group("referrer"),
+        "useragent": ua,
+        "is_bot":    is_bot(ua),
+        "is_static": is_static(m.group("url")),
     }
 
-
 def parse_log(filepath: str) -> pd.DataFrame:
-    """
-    Parse seluruh file Nginx access.log → DataFrame.
-    Digunakan untuk training model dari data historis.
-    """
-    records = []
-    errors  = 0
-    with open(filepath, errors="ignore") as f:
-        for line in f:
-            parsed = parse_line(line)
-            if parsed:
-                records.append(parsed)
-            else:
-                errors += 1
-
+    records, errors = [], 0
+    try:
+        with open(filepath, errors="ignore") as f:
+            for line in f:
+                p = parse_line(line)
+                if p: records.append(p)
+                else: errors += 1
+    except FileNotFoundError:
+        logger.error(f"File log tidak ditemukan: {filepath}")
+        return pd.DataFrame()
     df = pd.DataFrame(records)
-    logger.info(f"Parse selesai: {len(df):,} entri valid, {errors:,} baris gagal")
+    logger.info(f"Parse selesai: {len(df):,} entri valid, {errors:,} gagal")
     return df
 
+def get_log_analytics(filepath: str) -> dict:
+    """Hitung statistik lengkap dari file log untuk dashboard."""
+    df = parse_log(filepath)
+    if df.empty:
+        return {"error": "Log kosong atau tidak ditemukan", "total": 0}
 
-def engineer_features(df: pd.DataFrame, min_normal: int = 3, min_bot: int = 2) -> pd.DataFrame:
-    """
-    Rekayasa fitur utama:
-    Hitung perbedaan response size antara akses normal dan bot per URL.
+    total = len(df)
+    # Hitung status code
+    status_counts = df["status"].value_counts().to_dict()
+    status_2xx = sum(v for k,v in status_counts.items() if 200 <= k < 300)
+    status_3xx = sum(v for k,v in status_counts.items() if 300 <= k < 400)
+    status_4xx = sum(v for k,v in status_counts.items() if 400 <= k < 500)
+    status_5xx = sum(v for k,v in status_counts.items() if k >= 500)
 
-    Fitur yang dihasilkan:
-    - size_diff_abs  : selisih absolut rata-rata response size (byte)
-    - size_ratio     : rasio size_bot / size_normal
-    - size_diff_pct  : persentase selisih terhadap size_normal
-    - size_normal_std: standar deviasi size akses normal
-    - size_bot_std   : standar deviasi size akses bot
-    """
-    # Filter: status 200, bukan resource statis
+    # Top URLs
+    top_urls = (df[~df["is_static"]]["url"]
+                .value_counts().head(10).reset_index()
+                .rename(columns={"index":"url","url":"url","count":"count"})
+                .to_dict("records"))
+    # pandas 2.x value_counts returns Series with name=url
+    top_urls = df[~df["is_static"]]["url"].value_counts().head(10)
+    top_urls = [{"url": k, "count": int(v)} for k,v in top_urls.items()]
+
+    # Top IPs
+    top_ips = df["ip"].value_counts().head(10)
+    top_ips = [{"ip": k, "count": int(v)} for k,v in top_ips.items()]
+
+    # Bot vs normal
+    bot_count    = int(df["is_bot"].sum())
+    normal_count = total - bot_count
+
+    # Traffic per hour (last 24h jika ada timestamp)
+    hourly = {}
+    if "time" in df.columns and df["time"].notna().any():
+        df_t = df[df["time"].notna()].copy()
+        df_t["hour"] = df_t["time"].dt.strftime("%H:00")
+        hourly = df_t.groupby("hour").size().to_dict()
+
+    # Top User Agents (non-bot singkat)
+    ua_counts = df["useragent"].apply(lambda x: x[:60]).value_counts().head(5)
+    top_ua = [{"ua": k[:60], "count": int(v)} for k,v in ua_counts.items()]
+
+    # Bytes transferred
+    total_bytes = int(df["size"].sum())
+
+    # Recent entries (last 50)
+    recent = df.tail(50)[["time_str","ip","method","url","status","size","useragent","is_bot"]].copy()
+    recent["useragent"] = recent["useragent"].str[:80]
+    recent = recent.fillna("-").to_dict("records")
+
+    # Status breakdown
+    status_detail = {}
+    for code, cnt in status_counts.items():
+        status_detail[str(code)] = int(cnt)
+
+    # Methods
+    method_counts = df["method"].value_counts().to_dict()
+    method_counts = {k: int(v) for k,v in method_counts.items()}
+
+    # Suspicious IPs (many 404/403)
+    suspicious = (df[df["status"].isin([404,403,400,500])]
+                  .groupby("ip").size()
+                  .sort_values(ascending=False)
+                  .head(5))
+    suspicious_ips = [{"ip": k, "count": int(v)} for k,v in suspicious.items()]
+
+    return {
+        "total":          total,
+        "status_2xx":     status_2xx,
+        "status_3xx":     status_3xx,
+        "status_4xx":     status_4xx,
+        "status_5xx":     status_5xx,
+        "bot_count":      bot_count,
+        "normal_count":   normal_count,
+        "total_bytes":    total_bytes,
+        "total_mb":       round(total_bytes / 1024 / 1024, 2),
+        "top_urls":       top_urls,
+        "top_ips":        top_ips,
+        "top_ua":         top_ua,
+        "hourly":         hourly,
+        "status_detail":  status_detail,
+        "method_counts":  method_counts,
+        "suspicious_ips": suspicious_ips,
+        "recent":         recent,
+        "error":          None,
+    }
+
+def engineer_features(df: pd.DataFrame, min_normal: int = 1, min_bot: int = 1) -> pd.DataFrame:
     df = df[(df["status"] == 200) & (~df["url"].apply(is_static))].copy()
-
-    # Agregasi per URL
-    normal = (
-        df[~df["is_bot"]]
-        .groupby("url")["size"]
-        .agg(size_normal_mean="mean", size_normal_std="std", count_normal="count")
-        .reset_index()
-    )
-    bot = (
-        df[df["is_bot"]]
-        .groupby("url")["size"]
-        .agg(size_bot_mean="mean", size_bot_std="std", count_bot="count")
-        .reset_index()
-    )
-
+    normal = (df[~df["is_bot"]].groupby("url")["size"]
+              .agg(size_normal_mean="mean", size_normal_std="std", count_normal="count").reset_index())
+    bot    = (df[df["is_bot"]].groupby("url")["size"]
+              .agg(size_bot_mean="mean", size_bot_std="std", count_bot="count").reset_index())
     merged = pd.merge(normal, bot, on="url").fillna(0)
-    # Hanya URL dengan data yang representatif
-    merged = merged[
-        (merged["count_normal"] >= min_normal) &
-        (merged["count_bot"]    >= min_bot)
-    ].copy()
-
+    merged = merged[(merged["count_normal"] >= min_normal) & (merged["count_bot"] >= min_bot)].copy()
     if merged.empty:
-        logger.warning("Tidak ada URL yang memenuhi syarat minimum akses normal & bot")
         return merged
-
-    # Fitur turunan
     denom = merged["size_normal_mean"].replace(0, 1)
     merged["size_diff_abs"] = abs(merged["size_normal_mean"] - merged["size_bot_mean"])
     merged["size_ratio"]    = (merged["size_bot_mean"] / denom).round(4)
     merged["size_diff_pct"] = (merged["size_diff_abs"] / denom * 100).round(2)
-
     logger.info(f"Fitur dihasilkan untuk {len(merged)} URL")
     return merged
