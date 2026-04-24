@@ -3,986 +3,1201 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DefaceGuard — Monitor</title>
+<title>DefaceGuard Monitor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* ── Reset & Base ──────────────────────────────────────────── */
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#F0F4F8;--surface:#FFFFFF;--surface2:#F7F9FC;
+  --bg:#F8FAFC;--surface:#FFFFFF;--surface2:#F1F5F9;--surface3:#E2E8F0;
   --border:#E2E8F0;--border2:#CBD5E1;
-  --text:#0F172A;--text2:#475569;--text3:#94A3B8;
-  --blue:#2563EB;--blue-light:#EFF6FF;--blue-mid:#BFDBFE;
-  --green:#059669;--green-light:#ECFDF5;--green-mid:#A7F3D0;
-  --red:#DC2626;--red-light:#FEF2F2;--red-mid:#FECACA;
-  --orange:#D97706;--orange-light:#FFFBEB;--orange-mid:#FDE68A;
-  --purple:#7C3AED;--purple-light:#F5F3FF;--purple-mid:#DDD6FE;
-  --yellow:#CA8A04;--yellow-light:#FEFCE8;
-  --radius:10px;--radius-lg:14px;
-  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
-  --shadow-md:0 4px 6px -1px rgba(0,0,0,.07),0 2px 4px -1px rgba(0,0,0,.05);
-  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.08),0 4px 6px -2px rgba(0,0,0,.04);
-  --mono:'DM Mono',monospace;
-  --sans:'DM Sans',sans-serif;
-  --sidebar:240px;
+  --text:#0F172A;--text2:#475569;--text3:#94A3B8;--text4:#CBD5E1;
+  --blue:#2563EB;--blue-bg:#EFF6FF;--blue-bd:#BFDBFE;--blue-dark:#1D4ED8;
+  --green:#059669;--green-bg:#F0FDF4;--green-bd:#A7F3D0;
+  --red:#DC2626;--red-bg:#FEF2F2;--red-bd:#FECACA;
+  --orange:#D97706;--orange-bg:#FFFBEB;--orange-bd:#FDE68A;
+  --purple:#7C3AED;--purple-bg:#F5F3FF;--purple-bd:#DDD6FE;
+  --teal:#0891B2;--teal-bg:#F0F9FF;--teal-bd:#BAE6FD;
+  --pink:#DB2777;--pink-bg:#FDF2F8;--pink-bd:#FBCFE8;
+  --sidebar:56px;--sidebar-open:220px;
+  --r:8px;--r2:12px;--r3:16px;
+  --sh:0 1px 2px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.1);
+  --sh2:0 4px 6px -1px rgba(0,0,0,.07),0 2px 4px -2px rgba(0,0,0,.05);
+  --sh3:0 10px 15px -3px rgba(0,0,0,.08),0 4px 6px -4px rgba(0,0,0,.05);
+  --f:'Inter',sans-serif;--fm:'JetBrains Mono',monospace;
 }
+html,body{height:100%;font-family:var(--f);background:var(--bg);color:var(--text);font-size:13.5px;line-height:1.6;-webkit-font-smoothing:antialiased}
 
-html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+/* ── Layout ─────────────── */
+.app{display:flex;min-height:100vh}
 
-/* ── Layout ─────────────────────────────────────────────────── */
-.layout{display:flex;min-height:100vh}
-
-/* ── Sidebar ─────────────────────────────────────────────────── */
+/* ── Sidebar ─────────────── */
 .sidebar{
-  width:var(--sidebar);flex-shrink:0;background:var(--text);
-  display:flex;flex-direction:column;position:fixed;top:0;left:0;
-  height:100vh;z-index:100;overflow:hidden;
+  width:var(--sidebar-open);flex-shrink:0;
+  background:#0F172A;position:fixed;top:0;left:0;height:100vh;
+  z-index:200;display:flex;flex-direction:column;
+  transition:width .2s ease;overflow:hidden;
 }
+.sidebar.collapsed{width:var(--sidebar)}
 .sidebar-logo{
-  padding:24px 20px 16px;border-bottom:1px solid rgba(255,255,255,.08);
+  height:56px;display:flex;align-items:center;padding:0 16px;
+  border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;gap:10px;
 }
-.sidebar-logo .brand{font-size:17px;font-weight:600;color:#fff;letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
-.sidebar-logo .brand span{color:#60A5FA}
-.sidebar-logo .domain{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.35);margin-top:4px}
-.nav{flex:1;padding:12px 0;overflow-y:auto}
+.logo-icon{width:28px;height:28px;background:linear-gradient(135deg,#2563EB,#7C3AED);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{width:16px;height:16px;color:#fff}
+.logo-text{font-size:14px;font-weight:700;color:#F8FAFC;white-space:nowrap;letter-spacing:-.3px}
+.logo-text span{color:#60A5FA}
+
+.nav{flex:1;padding:8px 0;overflow-y:auto;overflow-x:hidden}
+.nav-group-label{
+  font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:1px;
+  color:rgba(255,255,255,.25);padding:12px 16px 4px;white-space:nowrap;
+}
 .nav-item{
-  display:flex;align-items:center;gap:10px;padding:10px 20px;
-  color:rgba(255,255,255,.55);cursor:pointer;transition:all .15s;
-  font-size:13px;font-weight:500;border-left:3px solid transparent;
+  display:flex;align-items:center;gap:10px;padding:8px 14px;
+  color:rgba(255,255,255,.5);cursor:pointer;border-radius:6px;margin:1px 6px;
+  transition:all .15s;font-size:12.5px;font-weight:500;white-space:nowrap;
 }
-.nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
-.nav-item.active{color:#fff;background:rgba(96,165,250,.15);border-left-color:#60A5FA}
-.nav-item .ico{width:16px;height:16px;opacity:.7;flex-shrink:0}
-.nav-item.active .ico{opacity:1}
-.nav-sep{margin:8px 20px;border:none;border-top:1px solid rgba(255,255,255,.07)}
-.nav-label{padding:8px 20px 4px;font-size:10px;font-weight:500;color:rgba(255,255,255,.3);letter-spacing:1px;text-transform:uppercase}
-
-.sidebar-status{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08)}
-.status-dot{
-  display:flex;align-items:center;gap:8px;
-  font-size:11px;font-weight:500;color:rgba(255,255,255,.5);
+.nav-item:hover{color:rgba(255,255,255,.9);background:rgba(255,255,255,.07)}
+.nav-item.active{color:#F8FAFC;background:rgba(255,255,255,.12)}
+.nav-item.active .nav-icon{color:#60A5FA}
+.nav-icon{width:16px;height:16px;flex-shrink:0;color:rgba(255,255,255,.4)}
+.nav-item.active .nav-badge,
+.nav-item:hover .nav-badge{display:flex}
+.nav-badge{
+  margin-left:auto;display:none;background:var(--red);color:#fff;
+  font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px;
 }
-.dot{width:7px;height:7px;border-radius:50%;background:#6B7280;flex-shrink:0}
-.dot.ok{background:#34D399;box-shadow:0 0 0 3px rgba(52,211,153,.2)}
-.dot.error{background:#F87171}
-.dot.pulse{animation:pulse-dot 1.5s infinite}
-@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+.sidebar-bottom{padding:12px;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.sys-status{
+  display:flex;align-items:center;gap:8px;padding:8px 10px;
+  background:rgba(255,255,255,.05);border-radius:7px;
+}
+.sys-dot{width:7px;height:7px;border-radius:50%;background:#6B7280;flex-shrink:0}
+.sys-dot.live{background:#10B981;animation:pulse 2s infinite}
+.sys-dot.error{background:#F87171}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.4)}50%{box-shadow:0 0 0 5px rgba(16,185,129,0)}}
+.sys-info{min-width:0;overflow:hidden}
+.sys-title{font-size:11px;font-weight:600;color:#F8FAFC;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sys-sub{font-size:10px;color:rgba(255,255,255,.35);white-space:nowrap;font-family:var(--fm)}
+.sidebar-toggle{
+  position:absolute;top:16px;right:-10px;width:20px;height:20px;
+  background:#334155;border:2px solid #1E293B;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:201;
+  transition:transform .2s;
+}
+.sidebar-toggle svg{width:10px;height:10px;color:#94A3B8;transition:transform .2s}
+.sidebar.collapsed .sidebar-toggle svg{transform:rotate(180deg)}
 
-/* ── Main content ──────────────────────────────────────────── */
-.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+/* ── Main ─────────────── */
+.main{margin-left:var(--sidebar-open);flex:1;display:flex;flex-direction:column;transition:margin-left .2s}
+.sidebar.collapsed ~ .main{margin-left:var(--sidebar)}
+
+/* ── Topbar ─────────────── */
 .topbar{
-  background:var(--surface);border-bottom:1px solid var(--border);
-  padding:0 28px;height:58px;display:flex;align-items:center;
-  justify-content:space-between;position:sticky;top:0;z-index:50;
+  height:56px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 24px;gap:16px;
+  position:sticky;top:0;z-index:100;box-shadow:var(--sh);
 }
-.topbar-title{font-size:15px;font-weight:600;color:var(--text)}
-.topbar-right{display:flex;align-items:center;gap:12px}
-.badge-live{
-  display:flex;align-items:center;gap:5px;
-  background:#ECFDF5;border:1px solid #A7F3D0;
-  color:#065F46;font-size:11px;font-weight:600;
-  padding:3px 10px;border-radius:20px;
+.topbar-title{font-size:14px;font-weight:600;color:var(--text);flex:1}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.pill-live{
+  display:flex;align-items:center;gap:5px;padding:4px 10px;
+  background:var(--green-bg);border:1px solid var(--green-bd);
+  border-radius:20px;font-size:11px;font-weight:600;color:var(--green);
 }
-.badge-live .live-dot{width:6px;height:6px;border-radius:50%;background:#10B981;animation:pulse-dot 1.2s infinite}
-.last-update{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.pill-live .pdot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
+.topbar-time{font-size:11.5px;color:var(--text3);font-family:var(--fm)}
+.icon-btn{
+  width:32px;height:32px;border-radius:7px;border:1px solid var(--border);
+  background:var(--surface);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--text3);transition:all .15s;
+}
+.icon-btn:hover{background:var(--surface2);color:var(--text2)}
 
-.content{padding:24px 28px;flex:1}
-
-/* ── Sections / Pages ──────────────────────────────────────── */
+/* ── Content ─────────────── */
+.content{padding:20px 24px;flex:1}
 .page{display:none}
 .page.active{display:block}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-title{font-size:13px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:6px}
 
-/* ── Stat Cards ─────────────────────────────────────────────── */
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px}
-.stat-card{
+/* ── Stat Cards ─────────────── */
+.stat-row{display:grid;gap:14px;margin-bottom:20px}
+.stat-row-6{grid-template-columns:repeat(6,1fr)}
+.stat-row-4{grid-template-columns:repeat(4,1fr)}
+.stat-row-3{grid-template-columns:repeat(3,1fr)}
+.stat-row-2{grid-template-columns:repeat(2,1fr)}
+
+.scard{
   background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius-lg);padding:18px 20px;
-  box-shadow:var(--shadow);transition:box-shadow .15s;
+  border-radius:var(--r2);padding:16px 18px;box-shadow:var(--sh);
+  transition:box-shadow .15s,transform .15s;position:relative;overflow:hidden;
 }
-.stat-card:hover{box-shadow:var(--shadow-md)}
-.stat-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:15px}
-.stat-val{font-size:26px;font-weight:600;line-height:1;letter-spacing:-.5px}
-.stat-lbl{font-size:11px;font-weight:500;color:var(--text2);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
-.stat-sub{font-size:11px;color:var(--text3);margin-top:4px;font-family:var(--mono)}
-
-.s-blue  .stat-icon{background:var(--blue-light);color:var(--blue)}
-.s-green .stat-icon{background:var(--green-light);color:var(--green)}
-.s-red   .stat-icon{background:var(--red-light);color:var(--red)}
-.s-orange.stat-icon{background:var(--orange-light);color:var(--orange)}
-.s-purple.stat-icon{background:var(--purple-light);color:var(--purple)}
-.s-blue  .stat-val{color:var(--blue)}
-.s-green .stat-val{color:var(--green)}
-.s-red   .stat-val{color:var(--red)}
-.s-orange .stat-val{color:var(--orange)}
-.s-purple .stat-val{color:var(--purple)}
-
-/* ── Cards / Panels ─────────────────────────────────────────── */
-.card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius-lg);box-shadow:var(--shadow);
-  margin-bottom:20px;overflow:hidden;
+.scard:hover{box-shadow:var(--sh2);transform:translateY(-1px)}
+.scard-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.scard-icon{
+  width:34px;height:34px;border-radius:9px;display:flex;
+  align-items:center;justify-content:center;font-size:16px;flex-shrink:0;
 }
-.card-head{
-  padding:14px 20px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
+.scard-trend{font-size:11px;font-weight:600;display:flex;align-items:center;gap:3px}
+.scard-trend.up{color:var(--green)}.scard-trend.down{color:var(--red)}.scard-trend.neu{color:var(--text3)}
+.scard-val{font-size:24px;font-weight:700;line-height:1;letter-spacing:-.5px;margin-bottom:2px}
+.scard-lbl{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
+.scard-sub{font-size:11px;color:var(--text3);margin-top:3px;font-family:var(--fm)}
+.scard-bar{position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 var(--r2) var(--r2)}
+
+.sc-blue  .scard-icon{background:var(--blue-bg);color:var(--blue)}    .sc-blue  .scard-val{color:var(--blue)}    .sc-blue  .scard-bar{background:var(--blue)}
+.sc-green .scard-icon{background:var(--green-bg);color:var(--green)}  .sc-green .scard-val{color:var(--green)}  .sc-green .scard-bar{background:var(--green)}
+.sc-red   .scard-icon{background:var(--red-bg);color:var(--red)}      .sc-red   .scard-val{color:var(--red)}    .sc-red   .scard-bar{background:var(--red)}
+.sc-orange.scard-icon{background:var(--orange-bg);color:var(--orange)}.sc-orange.scard-val{color:var(--orange)}.sc-orange .scard-bar{background:var(--orange)}
+.sc-purple.scard-icon{background:var(--purple-bg);color:var(--purple)}.sc-purple.scard-val{color:var(--purple)}.sc-purple .scard-bar{background:var(--purple)}
+.sc-teal  .scard-icon{background:var(--teal-bg);color:var(--teal)}    .sc-teal  .scard-val{color:var(--teal)}    .sc-teal  .scard-bar{background:var(--teal)}
+
+/* ── Cards / Panels ─────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);box-shadow:var(--sh);margin-bottom:18px;overflow:hidden}
+.card-head{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);min-height:46px}
+.card-title{font-size:12.5px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:7px}
+.card-title-icon{width:18px;height:18px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px}
+.cti-blue{background:var(--blue-bg);color:var(--blue)}
+.cti-green{background:var(--green-bg);color:var(--green)}
+.cti-red{background:var(--red-bg);color:var(--red)}
+.cti-orange{background:var(--orange-bg);color:var(--orange)}
+.cti-purple{background:var(--purple-bg);color:var(--purple)}
+.cti-teal{background:var(--teal-bg);color:var(--teal)}
+.card-action{display:flex;align-items:center;gap:8px}
+.cbtn{
+  font-size:11.5px;font-weight:600;padding:5px 12px;border-radius:6px;
+  cursor:pointer;border:1px solid var(--border);background:var(--surface);
+  color:var(--text2);transition:all .15s;font-family:var(--f);
 }
-.card-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px}
-.card-title .ico2{font-size:14px}
-.card-body{padding:20px}
-.card-body.p0{padding:0}
+.cbtn:hover{background:var(--surface2);border-color:var(--border2);color:var(--text)}
+.cbtn-blue{background:var(--blue);color:#fff;border-color:var(--blue)}
+.cbtn-blue:hover{background:var(--blue-dark)}
+.cbtn-sm{font-size:10.5px;padding:3px 9px}
+.card-body{padding:16px 18px}
+.card-body-p0{padding:0}
 
-/* ── Grid layouts ────────────────────────────────────────────── */
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+/* ── Grid ─────────────── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+.grid-1-2{display:grid;grid-template-columns:1fr 2fr;gap:18px}
+.grid-2-1{display:grid;grid-template-columns:2fr 1fr;gap:18px}
 
-/* ── Tables ─────────────────────────────────────────────────── */
+/* ── Tables ─────────────── */
 .tbl-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:12.5px}
+table{width:100%;border-collapse:collapse}
 th{
-  background:var(--surface2);color:var(--text2);font-size:10.5px;
-  font-weight:600;text-transform:uppercase;letter-spacing:.5px;
-  padding:9px 14px;text-align:left;border-bottom:1px solid var(--border);
+  background:var(--surface2);padding:8px 14px;text-align:left;
+  font-size:10.5px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--text3);border-bottom:1px solid var(--border);
   white-space:nowrap;
 }
-td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+td{padding:8.5px 14px;border-bottom:1px solid var(--border);font-size:12.5px;vertical-align:middle}
 tr:last-child td{border-bottom:none}
-tr:hover td{background:var(--surface2)}
+tr:hover td{background:#FAFBFC}
+.tbl-empty{text-align:center;padding:32px!important;color:var(--text3);font-style:italic}
 
-/* ── Status badges ───────────────────────────────────────────── */
-.s2xx{color:var(--green);background:var(--green-light);border:1px solid var(--green-mid)}
-.s3xx{color:var(--blue);background:var(--blue-light);border:1px solid var(--blue-mid)}
-.s4xx{color:var(--orange);background:var(--orange-light);border:1px solid var(--orange-mid)}
-.s5xx{color:var(--red);background:var(--red-light);border:1px solid var(--red-mid)}
-.status-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-family:var(--mono);font-size:11px;font-weight:500}
+/* ── Badges ─────────────── */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:5px;font-size:10.5px;font-weight:600;font-family:var(--fm)}
+.b-2xx,.b-ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
+.b-3xx{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-bd)}
+.b-4xx{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-bd)}
+.b-5xx,.b-err{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
+.b-bot{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd)}
+.b-human{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd)}
+.b-scanner{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
+.b-monitor{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-bd)}
+.b-high{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
+.b-medium{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-bd)}
+.b-low{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
+.b-sus{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
+.b-neutral{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
 
-.level-HIGH  {color:var(--red);background:var(--red-light);border:1px solid var(--red-mid)}
-.level-MEDIUM{color:var(--orange);background:var(--orange-light);border:1px solid var(--orange-mid)}
-.level-LOW   {color:var(--green);background:var(--green-light);border:1px solid var(--green-mid)}
-.level-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10.5px;font-weight:600;letter-spacing:.3px}
+/* ── Progress bar ─────────────── */
+.pbar-row{display:flex;align-items:center;gap:10px;padding:4px 0}
+.pbar-label{font-size:11.5px;color:var(--text2);font-family:var(--fm);flex-shrink:0;width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pbar-track{flex:1;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.pbar-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.pbar-val{width:48px;text-align:right;font-size:11px;font-weight:600;color:var(--text2);font-family:var(--fm);flex-shrink:0}
 
-.bot-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;background:#F5F3FF;color:#7C3AED;border:1px solid #DDD6FE}
-.human-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;background:#EFF6FF;color:#2563EB;border:1px solid #BFDBFE}
+/* ── Hourly chart ─────────────── */
+.hour-chart{display:flex;align-items:flex-end;gap:2px;height:64px;padding-top:4px}
+.hour-bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.hour-bar-fill{width:100%;border-radius:2px 2px 0 0;min-height:2px;transition:height .4s}
+.hour-bar:hover .hour-bar-fill{opacity:.75}
+.hour-label{font-size:8px;color:var(--text4);font-family:var(--fm)}
 
-/* ── Progress bar ────────────────────────────────────────────── */
-.progress-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.progress-row:last-child{margin-bottom:0}
-.progress-label{width:120px;font-size:12px;color:var(--text2);font-family:var(--mono);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.progress-bar-wrap{flex:1;background:var(--border);border-radius:4px;height:7px;overflow:hidden}
-.progress-bar{height:100%;border-radius:4px;transition:width .5s ease}
-.progress-count{width:50px;text-align:right;font-size:11px;font-weight:600;color:var(--text2);font-family:var(--mono)}
-
-/* ── Live log stream ─────────────────────────────────────────── */
-.live-log-wrap{
-  background:#0F172A;border-radius:var(--radius);padding:0;
-  font-family:var(--mono);font-size:11.5px;height:380px;
+/* ── Live log ─────────────── */
+.live-wrap{
+  background:#0D1117;border-radius:0 0 var(--r2) var(--r2);
+  font-family:var(--fm);font-size:11.5px;height:400px;
   overflow-y:auto;overflow-x:hidden;
 }
-.log-entry{
-  display:flex;align-items:flex-start;gap:0;padding:5px 14px;
-  border-bottom:1px solid rgba(255,255,255,.04);
-  transition:background .1s;cursor:default;
-  animation:slide-in .2s ease;
+.log-row{
+  display:grid;grid-template-columns:78px 110px 42px 1fr 36px 64px 52px;
+  align-items:center;padding:4px 14px;border-bottom:1px solid rgba(255,255,255,.04);
+  transition:background .1s;cursor:default;animation:fadeIn .2s;
 }
-@keyframes slide-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
-.log-entry:hover{background:rgba(255,255,255,.04)}
-.log-entry:last-child{border-bottom:none}
-.le-time{color:#64748B;width:84px;flex-shrink:0;font-size:10.5px}
-.le-ip  {color:#38BDF8;width:120px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.le-method{font-weight:500;width:46px;flex-shrink:0}
-.le-get{color:#34D399}.le-post{color:#F59E0B}.le-put{color:#A78BFA}.le-del{color:#F87171}.le-other{color:#94A3B8}
-.le-url{color:#E2E8F0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 8px}
-.le-status{width:36px;flex-shrink:0;text-align:right}
-.le-200{color:#34D399}.le-301,.le-302{color:#38BDF8}.le-404{color:#FBBF24}.le-500{color:#F87171}.le-other-s{color:#94A3B8}
-.le-size{color:#64748B;width:62px;flex-shrink:0;text-align:right;font-size:10px}
-.le-bot-tag{color:#A78BFA;font-size:9.5px;width:30px;flex-shrink:0;text-align:right}
+.log-row:hover{background:rgba(255,255,255,.03)}
+.log-row.sus-row{background:rgba(220,38,38,.05)!important}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.lc-time{color:#4B5563;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lc-ip{color:#38BDF8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lc-method{font-weight:500}
+.lc-GET{color:#34D399}.lc-POST{color:#F59E0B}.lc-PUT{color:#A78BFA}.lc-DELETE{color:#F87171}.lc-HEAD{color:#64748B}.lc-other{color:#6B7280}
+.lc-url{color:#E2E8F0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 6px}
+.lc-status{text-align:center}.ls-2xx{color:#34D399}.ls-3xx{color:#38BDF8}.ls-4xx{color:#FBBF24}.ls-5xx{color:#F87171}.ls-other{color:#6B7280}
+.lc-size{color:#4B5563;text-align:right;font-size:10px}
+.lc-type{display:flex;justify-content:flex-end}
+.live-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;color:rgba(255,255,255,.2)}
+.live-empty svg{width:24px;height:24px;opacity:.4}
 
-.log-empty{display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.2);font-size:13px;gap:8px}
-
-/* ── Charts (pure CSS bar charts) ───────────────────────────── */
-.bar-chart{display:flex;align-items:flex-end;gap:4px;height:80px;padding-top:4px}
-.bar-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
-.bar{width:100%;border-radius:3px 3px 0 0;min-height:3px;transition:height .4s ease}
-.bar-lbl{font-size:9px;color:var(--text3);font-family:var(--mono);white-space:nowrap}
-.bar-val{font-size:9px;color:var(--text2);font-weight:600;font-family:var(--mono)}
-
-/* ── Pie / Donut ─────────────────────────────────────────────── */
-.pie-wrap{display:flex;align-items:center;gap:20px}
-.pie-legend{flex:1}
-.legend-item{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px}
-.legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-
-/* ── Preview iframe ──────────────────────────────────────────── */
-.preview-wrap{
-  border:1px solid var(--border);border-radius:var(--radius);
-  overflow:hidden;background:var(--surface2);
+/* ── Monitor cards ─────────────── */
+.monitor-card{
+  border:1px solid var(--border);border-radius:var(--r2);padding:16px;
+  background:var(--surface);transition:all .15s;
 }
-.preview-bar{
-  background:var(--surface);border-bottom:1px solid var(--border);
-  padding:8px 14px;display:flex;align-items:center;gap:8px;
-}
-.preview-dots{display:flex;gap:5px}
-.preview-dots span{width:10px;height:10px;border-radius:50%}
-.pd-r{background:#FC615D}.pd-y{background:#FDC24E}.pd-g{background:#34C749}
-.preview-url{
-  flex:1;background:var(--surface2);border:1px solid var(--border);
-  border-radius:5px;padding:4px 10px;font-family:var(--mono);font-size:11px;
-  color:var(--text2);
-}
-.preview-iframe{
-  width:100%;height:480px;border:none;background:#fff;
-  transform-origin:top left;
-}
-.preview-btn{
-  background:var(--blue);color:#fff;border:none;border-radius:6px;
-  padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;
-  font-family:var(--sans);white-space:nowrap;transition:background .15s;
-}
-.preview-btn:hover{background:#1D4ED8}
+.monitor-card.up{border-left:4px solid var(--green)}
+.monitor-card.down{border-left:4px solid var(--red)}
+.monitor-card.warn{border-left:4px solid var(--orange)}
+.monitor-status{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.monitor-dot{width:9px;height:9px;border-radius:50%}
+.monitor-dot.up{background:var(--green);box-shadow:0 0 0 3px var(--green-bd)}
+.monitor-dot.down{background:var(--red);box-shadow:0 0 0 3px var(--red-bd)}
+.monitor-dot.warn{background:var(--orange);box-shadow:0 0 0 3px var(--orange-bd)}
+.monitor-url{font-family:var(--fm);font-size:11.5px;color:var(--blue);font-weight:500;word-break:break-all}
+.monitor-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.metric-item{background:var(--surface2);border-radius:6px;padding:8px 10px}
+.metric-val{font-size:16px;font-weight:700;font-family:var(--fm)}
+.metric-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
 
-/* ── Inputs & Selects ────────────────────────────────────────── */
-.input{
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:6px;padding:6px 10px;font-family:var(--mono);font-size:12px;
-  color:var(--text);outline:none;
+/* ── Threat bar ─────────────── */
+.threat-bar{height:6px;border-radius:3px;background:var(--surface3);overflow:hidden;width:80px;display:inline-block;vertical-align:middle}
+.threat-fill{height:100%;border-radius:3px}
+.tf-low{background:var(--green)}.tf-mid{background:var(--orange)}.tf-high{background:var(--red)}
+
+/* ── Input/Select ─────────────── */
+.inp{
+  background:var(--surface);border:1px solid var(--border);border-radius:6px;
+  padding:5px 10px;font-family:var(--fm);font-size:12px;color:var(--text);
+  outline:none;transition:border-color .15s;
 }
-.input:focus{border-color:var(--blue)}
-select.input{cursor:pointer}
+.inp:focus{border-color:var(--blue)}
 
-/* ── Utility ─────────────────────────────────────────────────── */
-.mono{font-family:var(--mono)}
-.text-muted{color:var(--text3)}
-.text-sm{font-size:11.5px}
-.fw6{font-weight:600}
-.mb8{margin-bottom:8px}
-.mb16{margin-bottom:16px}
-.flex{display:flex}.items-center{align-items:center}.gap8{gap:8px}.gap12{gap:12px}
-.ml-auto{margin-left:auto}
-
-/* ── Skeleton loading ────────────────────────────────────────── */
-.skel{background:linear-gradient(90deg,var(--border) 25%,var(--surface2) 50%,var(--border) 75%);background-size:200% 100%;animation:skel-anim 1.2s infinite;border-radius:4px}
-@keyframes skel-anim{0%{background-position:200% 0}100%{background-position:-200% 0}}
-
-/* ── Toast ───────────────────────────────────────────────────── */
-.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+/* ── Toast ─────────────── */
+.toasts{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
 .toast{
   background:#1E293B;color:#E2E8F0;padding:10px 16px;border-radius:8px;
-  font-size:12.5px;box-shadow:var(--shadow-lg);
-  animation:slide-in .2s ease;max-width:300px;
+  font-size:12.5px;box-shadow:var(--sh3);pointer-events:auto;
+  animation:slideUp .2s ease;max-width:320px;
+  display:flex;align-items:center;gap:8px;
 }
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-/* ── Responsive ──────────────────────────────────────────────── */
-@media(max-width:1200px){.grid-2,.grid-3{grid-template-columns:1fr}}
-@media(max-width:768px){
-  .sidebar{width:64px}
-  .sidebar-logo .brand span:last-child,.nav-item span,.nav-label,.sidebar-status{display:none}
-  .main{margin-left:64px}
-  .content{padding:16px}
-  .stat-grid{grid-template-columns:repeat(2,1fr)}
-}
+/* ── Divider ─────────────── */
+.div{height:1px;background:var(--border);margin:14px 0}
+
+/* ── Responsive ─────────────── */
+@media(max-width:1400px){.stat-row-6{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:1100px){.grid-2,.grid-3,.grid-1-2,.grid-2-1{grid-template-columns:1fr}.stat-row-4,.stat-row-6{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.content{padding:12px 14px}.stat-row-6,.stat-row-4{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
+<div class="app">
 
-<div class="layout">
-
-<!-- ── SIDEBAR ──────────────────────────────────────────────── -->
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="brand">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      <span>Dface<span>Guard</span></span>
-    </div>
-    <div class="domain" id="sidebar-domain">{{ target_url }}</div>
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
   </div>
-
-  <nav class="nav">
-    <div class="nav-item active" onclick="goto('overview')">
-      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+  <div class="sidebar-logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <div class="logo-text">Dface<span>Guard</span></div>
+  </div>
+  <nav class="nav" id="nav">
+    <div class="nav-group-label">Dashboard</div>
+    <div class="nav-item active" data-page="overview" onclick="goto('overview',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
       <span>Overview</span>
     </div>
-    <div class="nav-item" onclick="goto('live')">
-      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+    <div class="nav-item" data-page="live" onclick="goto('live',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
       <span>Live Monitor</span>
     </div>
-    <div class="nav-item" onclick="goto('stats')">
-      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-      <span>Statistik Log</span>
+    <div class="nav-group-label">Analitik</div>
+    <div class="nav-item" data-page="traffic" onclick="goto('traffic',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>Traffic Log</span>
     </div>
-    <div class="nav-item" onclick="goto('detections')">
-      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <div class="nav-item" data-page="threats" onclick="goto('threats',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>Ancaman</span>
+      <span class="nav-badge" id="threat-badge">0</span>
+    </div>
+    <div class="nav-item" data-page="detections" onclick="goto('detections',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <span>Deteksi Anomali</span>
+      <span class="nav-badge" id="det-badge">0</span>
     </div>
-    <hr class="nav-sep">
-    <div class="nav-item" onclick="goto('preview')">
-      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-      <span>Preview Website</span>
+    <div class="nav-group-label">Website</div>
+    <div class="nav-item" data-page="monitor" onclick="goto('monitor',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <span>Website Monitor</span>
     </div>
   </nav>
-
-  <div class="sidebar-status">
-    <div class="status-dot">
-      <div class="dot pulse" id="sys-dot"></div>
-      <span id="sys-label">Menghubungkan...</span>
+  <div class="sidebar-bottom">
+    <div class="sys-status">
+      <div class="sys-dot" id="sys-dot"></div>
+      <div class="sys-info">
+        <div class="sys-title" id="sys-title">Menghubungkan...</div>
+        <div class="sys-sub" id="sys-log">{{ log_path }}</div>
+      </div>
     </div>
   </div>
 </aside>
 
-<!-- ── MAIN ──────────────────────────────────────────────────── -->
-<main class="main">
-  <header class="topbar">
+<!-- MAIN -->
+<main class="main" id="main-content">
+  <div class="topbar">
     <div class="topbar-title" id="page-title">Overview</div>
     <div class="topbar-right">
-      <div class="badge-live"><div class="live-dot"></div>Live</div>
-      <div class="last-update" id="last-update">—</div>
+      <div class="pill-live"><div class="pdot"></div>Live</div>
+      <div class="topbar-time" id="clock">—</div>
+      <button class="icon-btn" onclick="refresh(true)" title="Refresh">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+      </button>
     </div>
-  </header>
+  </div>
 
   <div class="content">
 
-    <!-- ════════════════════════════════════════════════════════
-         PAGE: OVERVIEW
-    ════════════════════════════════════════════════════════ -->
-    <div class="page active" id="page-overview">
-
-      <!-- Stat cards row 1: log stats -->
-      <div class="stat-grid" id="overview-stats">
-        <div class="stat-card s-blue">
-          <div class="stat-icon">📡</div>
-          <div class="stat-val" id="ov-total">—</div>
-          <div class="stat-lbl">Total Request</div>
-          <div class="stat-sub" id="ov-log-path">{{ log_path }}</div>
-        </div>
-        <div class="stat-card s-green">
-          <div class="stat-icon">✅</div>
-          <div class="stat-val" id="ov-2xx">—</div>
-          <div class="stat-lbl">2xx Sukses</div>
-          <div class="stat-sub" id="ov-2xx-pct">—</div>
-        </div>
-        <div class="stat-card s-orange">
-          <div class="stat-icon">⚠️</div>
-          <div class="stat-val" id="ov-4xx">—</div>
-          <div class="stat-lbl">4xx Error</div>
-          <div class="stat-sub" id="ov-4xx-pct">—</div>
-        </div>
-        <div class="stat-card s-red">
-          <div class="stat-icon">🚨</div>
-          <div class="stat-val" id="ov-5xx">—</div>
-          <div class="stat-lbl">5xx Server Error</div>
-          <div class="stat-sub" id="ov-5xx-pct">—</div>
-        </div>
-        <div class="stat-card s-purple">
-          <div class="stat-icon">🤖</div>
-          <div class="stat-val" id="ov-bots">—</div>
-          <div class="stat-lbl">Bot Request</div>
-          <div class="stat-sub" id="ov-bot-pct">—</div>
-        </div>
-        <div class="stat-card" style="border-left:3px solid var(--blue)">
-          <div class="stat-icon" style="background:#F0FDF4;color:#166534">💾</div>
-          <div class="stat-val" style="color:var(--text)" id="ov-bytes">—</div>
-          <div class="stat-lbl">Data Transfer</div>
-          <div class="stat-sub">total bytes</div>
-        </div>
+  <!-- ══════════════════════════════════════ OVERVIEW ══ -->
+  <div class="page active" id="page-overview">
+    <div class="stat-row stat-row-6" id="ov-stats1">
+      <div class="scard sc-blue">
+        <div class="scard-top"><div class="scard-icon">📡</div></div>
+        <div class="scard-val" id="ov-total">—</div>
+        <div class="scard-lbl">Total Request</div>
+        <div class="scard-sub" id="ov-range">memuat...</div>
+        <div class="scard-bar"></div>
       </div>
-
-      <!-- Deteksi anomali cards -->
-      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
-        <div class="stat-card s-red">
-          <div class="stat-icon">🔴</div>
-          <div class="stat-val" id="ov-high">—</div>
-          <div class="stat-lbl">Anomali HIGH</div>
-        </div>
-        <div class="stat-card s-orange">
-          <div class="stat-icon">🟡</div>
-          <div class="stat-val" id="ov-medium">—</div>
-          <div class="stat-lbl">Anomali MEDIUM</div>
-        </div>
-        <div class="stat-card s-green">
-          <div class="stat-icon">🟢</div>
-          <div class="stat-val" id="ov-low">—</div>
-          <div class="stat-lbl">Anomali LOW</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:#F0FDF4;color:#166534">📊</div>
-          <div class="stat-val" style="color:var(--text)" id="ov-analyzed">—</div>
-          <div class="stat-lbl">URL Dianalisis</div>
-        </div>
+      <div class="scard sc-green">
+        <div class="scard-top"><div class="scard-icon">✅</div><span class="scard-trend neu" id="ov-2xx-pct">—</span></div>
+        <div class="scard-val" id="ov-2xx">—</div>
+        <div class="scard-lbl">Sukses (2xx)</div>
+        <div class="scard-bar"></div>
       </div>
-
-      <div class="grid-2">
-        <!-- Top URLs -->
-        <div class="card">
-          <div class="card-head">
-            <div class="card-title"><span class="ico2">🔗</span> Top URL Teratas</div>
-            <span class="text-muted text-sm">per frekuensi akses</span>
-          </div>
-          <div class="card-body" id="top-urls-chart">
-            <div style="color:var(--text3);font-size:12px">Memuat...</div>
-          </div>
-        </div>
-
-        <!-- Status code breakdown -->
-        <div class="card">
-          <div class="card-head">
-            <div class="card-title"><span class="ico2">📊</span> HTTP Status Code</div>
-          </div>
-          <div class="card-body" id="status-chart">
-            <div style="color:var(--text3);font-size:12px">Memuat...</div>
-          </div>
-        </div>
+      <div class="scard sc-orange">
+        <div class="scard-top"><div class="scard-icon">⚠️</div><span class="scard-trend neu" id="ov-4xx-pct">—</span></div>
+        <div class="scard-val" id="ov-4xx">—</div>
+        <div class="scard-lbl">Client Error (4xx)</div>
+        <div class="scard-bar"></div>
       </div>
-
-      <div class="grid-2">
-        <!-- Top IPs -->
-        <div class="card">
-          <div class="card-head">
-            <div class="card-title"><span class="ico2">🌐</span> Top IP Address</div>
-          </div>
-          <div class="card-body" id="top-ips-chart">
-            <div style="color:var(--text3);font-size:12px">Memuat...</div>
-          </div>
-        </div>
-
-        <!-- Bot vs Normal + Methods -->
-        <div class="card">
-          <div class="card-head">
-            <div class="card-title"><span class="ico2">🤖</span> Bot vs Pengguna</div>
-          </div>
-          <div class="card-body">
-            <div class="pie-wrap">
-              <svg id="donut-chart" width="100" height="100" viewBox="0 0 36 36">
-                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#E2E8F0" stroke-width="3.8"/>
-                <circle id="donut-bot" cx="18" cy="18" r="15.9" fill="none" stroke="#7C3AED"
-                        stroke-width="3.8" stroke-dasharray="0 100" stroke-linecap="round"
-                        transform="rotate(-90 18 18)" style="transition:stroke-dasharray .5s ease"/>
-                <circle id="donut-normal" cx="18" cy="18" r="15.9" fill="none" stroke="#2563EB"
-                        stroke-width="3.8" stroke-dasharray="0 100" stroke-linecap="round"
-                        transform="rotate(-90 18 18)" style="transition:stroke-dasharray .5s ease"/>
-                <text x="18" y="20" text-anchor="middle" font-size="6" font-weight="600" fill="#0F172A" id="donut-pct">—</text>
-              </svg>
-              <div class="pie-legend">
-                <div class="legend-item"><div class="legend-dot" style="background:#7C3AED"></div><span id="leg-bot">Bot (—)</span></div>
-                <div class="legend-item"><div class="legend-dot" style="background:#2563EB"></div><span id="leg-normal">Normal (—)</span></div>
-              </div>
-            </div>
-            <div style="margin-top:16px">
-              <div class="text-sm fw6 mb8" style="color:var(--text2)">HTTP Methods</div>
-              <div id="method-bars"></div>
-            </div>
-          </div>
-        </div>
+      <div class="scard sc-red">
+        <div class="scard-top"><div class="scard-icon">🔥</div><span class="scard-trend neu" id="ov-5xx-pct">—</span></div>
+        <div class="scard-val" id="ov-5xx">—</div>
+        <div class="scard-lbl">Server Error (5xx)</div>
+        <div class="scard-bar"></div>
       </div>
+      <div class="scard sc-purple">
+        <div class="scard-top"><div class="scard-icon">🤖</div><span class="scard-trend neu" id="ov-bot-pct">—</span></div>
+        <div class="scard-val" id="ov-bot">—</div>
+        <div class="scard-lbl">Bot Traffic</div>
+        <div class="scard-bar"></div>
+      </div>
+      <div class="scard sc-teal">
+        <div class="scard-top"><div class="scard-icon">💾</div></div>
+        <div class="scard-val" id="ov-bytes">—</div>
+        <div class="scard-lbl">Data Transfer</div>
+        <div class="scard-sub" id="ov-size-avg">avg — / req</div>
+        <div class="scard-bar"></div>
+      </div>
+    </div>
 
-      <!-- Suspicious IPs -->
+    <div class="stat-row stat-row-4">
+      <div class="scard sc-red">
+        <div class="scard-top"><div class="scard-icon">🔴</div></div>
+        <div class="scard-val" id="ov-high">—</div>
+        <div class="scard-lbl">Anomali HIGH</div>
+        <div class="scard-bar"></div>
+      </div>
+      <div class="scard sc-orange">
+        <div class="scard-top"><div class="scard-icon">🟡</div></div>
+        <div class="scard-val" id="ov-med">—</div>
+        <div class="scard-lbl">Anomali MEDIUM</div>
+        <div class="scard-bar"></div>
+      </div>
+      <div class="scard sc-green">
+        <div class="scard-top"><div class="scard-icon">🟢</div></div>
+        <div class="scard-val" id="ov-low">—</div>
+        <div class="scard-lbl">Anomali LOW</div>
+        <div class="scard-bar"></div>
+      </div>
+      <div class="scard" style="border-left:3px solid var(--red)">
+        <div class="scard-top"><div class="scard-icon" style="background:var(--red-bg);color:var(--red)">🚨</div></div>
+        <div class="scard-val" style="color:var(--red)" id="ov-scanner">—</div>
+        <div class="scard-lbl">Scanner/Attacker</div>
+        <div class="scard-bar" style="background:var(--red)"></div>
+      </div>
+    </div>
+
+    <div class="grid-2-1">
+      <!-- Hourly Traffic Chart -->
       <div class="card">
         <div class="card-head">
-          <div class="card-title"><span class="ico2">⚠️</span> IP Mencurigakan (banyak error 4xx/5xx)</div>
-        </div>
-        <div class="card-body p0">
-          <div class="tbl-wrap">
-            <table>
-              <thead><tr><th>#</th><th>IP Address</th><th>Jumlah Error</th><th>Indikasi</th></tr></thead>
-              <tbody id="suspicious-tbody"></tbody>
-            </table>
+          <div class="card-title"><div class="card-title-icon cti-blue">📈</div>Traffic per Jam</div>
+          <div class="card-action">
+            <span style="font-size:11px;color:var(--text3)" id="ov-date-range">—</span>
           </div>
+        </div>
+        <div class="card-body">
+          <div id="hourly-legend" style="display:flex;gap:12px;margin-bottom:12px;font-size:11px;color:var(--text3)">
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--blue);margin-right:4px"></span>Request</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--red);margin-right:4px"></span>Error</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--purple);margin-right:4px"></span>Bot</span>
+          </div>
+          <div id="hourly-chart" class="hour-chart"></div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px">
+            <span style="font-size:9px;color:var(--text3);font-family:var(--fm)">00:00</span>
+            <span style="font-size:9px;color:var(--text3);font-family:var(--fm)">12:00</span>
+            <span style="font-size:9px;color:var(--text3);font-family:var(--fm)">23:00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Breakdown -->
+      <div class="card">
+        <div class="card-head"><div class="card-title"><div class="card-title-icon cti-teal">📊</div>Status Code</div></div>
+        <div class="card-body" id="ov-status-bars" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><div class="card-title"><div class="card-title-icon cti-blue">🔗</div>Top URL (Dinamis)</div></div>
+        <div class="card-body" id="ov-top-urls" style="display:flex;flex-direction:column;gap:5px"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title"><div class="card-title-icon cti-purple">🌐</div>Top IP Address</div></div>
+        <div class="card-body" id="ov-top-ips" style="display:flex;flex-direction:column;gap:5px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ LIVE MONITOR ══ -->
+  <div class="page" id="page-live">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <div class="card-title-icon cti-green">📡</div>
+          Live Log Stream
+          <span style="font-family:var(--fm);font-size:11px;color:var(--text3);font-weight:400">{{ log_path }}</span>
+        </div>
+        <div class="card-action">
+          <span class="badge b-ok" id="live-status-badge"><span class="pdot" style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block"></span>Streaming</span>
+          <button class="cbtn cbtn-sm" onclick="clearLive()">Clear</button>
+          <button class="cbtn cbtn-sm" onclick="togglePause()" id="pause-btn">Pause</button>
+        </div>
+      </div>
+      <div style="background:#0D1117;padding:5px 14px;display:grid;grid-template-columns:78px 110px 42px 1fr 36px 64px 52px;gap:0;border-bottom:1px solid rgba(255,255,255,.06)">
+        <span style="font-size:9.5px;color:#374151;font-family:var(--fm);text-transform:uppercase;letter-spacing:.5px">Waktu</span>
+        <span style="font-size:9.5px;color:#374151;font-family:var(--fm);text-transform:uppercase;letter-spacing:.5px">IP</span>
+        <span style="font-size:9.5px;color:#374151;font-family:var(--fm);text-transform:uppercase;letter-spacing:.5px">Method</span>
+        <span style="font-size:9.5px;color:#374151;font-family:var(--fm);text-transform:uppercase;letter-spacing:.5px;padding-left:6px">URL</span>
+        <span style="font-size:9.5px;color:#374151;font-family:var(--fm);text-transform:uppercase;letter-spacing:.5px;text-align:center">Status</span>
+        <span style="font-size:9.5px;color:#374151;font-family:var(--fm);text-transform:uppercase;letter-spacing:.5px;text-align:right">Size</span>
+        <span style="font-size:9.5px;color:#374151;font-family:var(--fm);text-transform:uppercase;letter-spacing:.5px;text-align:right">Tipe</span>
+      </div>
+      <div class="live-wrap" id="live-container">
+        <div class="live-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          Menunggu log masuk...
         </div>
       </div>
     </div>
 
-    <!-- ════════════════════════════════════════════════════════
-         PAGE: LIVE MONITOR
-    ════════════════════════════════════════════════════════ -->
-    <div class="page" id="page-live">
-      <div class="card">
-        <div class="card-head">
-          <div class="card-title"><span class="ico2">📡</span> Live Log Stream — <span class="mono text-sm">{{ log_path }}</span></div>
-          <div class="flex items-center gap8">
-            <span class="badge-live" id="stream-badge"><div class="live-dot"></div>Streaming</span>
-            <button class="preview-btn" onclick="clearLiveLog()" style="background:#64748B;font-size:11px;padding:4px 10px">Clear</button>
-          </div>
-        </div>
-        <div class="live-log-wrap" id="live-log-container">
-          <div class="log-empty">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            Menunggu data log masuk...
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent entries table -->
-      <div class="card">
-        <div class="card-head">
-          <div class="card-title"><span class="ico2">📋</span> Log Terbaru</div>
-          <select class="input" id="tail-count" onchange="loadTailLog()">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><div class="card-title-icon cti-teal">📋</div>Log Terbaru</div>
+        <div class="card-action">
+          <select class="inp" id="tail-n" onchange="loadTail()">
             <option value="20">20 baris</option>
             <option value="50" selected>50 baris</option>
             <option value="100">100 baris</option>
+            <option value="200">200 baris</option>
           </select>
+          <button class="cbtn cbtn-sm cbtn-blue" onclick="loadTail()">Refresh</button>
         </div>
-        <div class="card-body p0">
-          <div class="tbl-wrap">
-            <table>
-              <thead><tr><th>Waktu</th><th>IP</th><th>Method</th><th>URL</th><th>Status</th><th>Size</th><th>Tipe</th><th>User Agent</th></tr></thead>
-              <tbody id="tail-tbody"></tbody>
-            </table>
-          </div>
-        </div>
+      </div>
+      <div class="card-body-p0 tbl-wrap">
+        <table>
+          <thead><tr><th>Waktu</th><th>IP</th><th>Method</th><th>URL</th><th>Status</th><th>Size</th><th>Tipe</th><th>User Agent</th></tr></thead>
+          <tbody id="tail-body"></tbody>
+        </table>
       </div>
     </div>
+  </div>
 
-    <!-- ════════════════════════════════════════════════════════
-         PAGE: STATISTIK LOG
-    ════════════════════════════════════════════════════════ -->
-    <div class="page" id="page-stats">
-      <div class="grid-3">
-        <div class="card">
-          <div class="card-head"><div class="card-title"><span class="ico2">📈</span> Ringkasan Traffic</div></div>
-          <div class="card-body" id="stats-summary"></div>
-        </div>
-        <div class="card">
-          <div class="card-head"><div class="card-title"><span class="ico2">🔗</span> Top 10 URL</div></div>
-          <div class="card-body" id="stats-top-urls"></div>
-        </div>
-        <div class="card">
-          <div class="card-head"><div class="card-title"><span class="ico2">🌐</span> Top 10 IP</div></div>
-          <div class="card-body" id="stats-top-ips"></div>
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-head"><div class="card-title"><span class="ico2">🤖</span> Top User Agent</div></div>
-          <div class="card-body" id="stats-top-ua"></div>
-        </div>
-        <div class="card">
-          <div class="card-head"><div class="card-title"><span class="ico2">📊</span> Distribusi Status Code</div></div>
-          <div class="card-body" id="stats-status-dist"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════════════════════════════════════════════════════════
-         PAGE: DETEKSI ANOMALI
-    ════════════════════════════════════════════════════════ -->
-    <div class="page" id="page-detections">
-      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
-        <div class="stat-card s-red"><div class="stat-icon">🔴</div><div class="stat-val" id="d-high">—</div><div class="stat-lbl">HIGH</div></div>
-        <div class="stat-card s-orange"><div class="stat-icon">🟡</div><div class="stat-val" id="d-medium">—</div><div class="stat-lbl">MEDIUM</div></div>
-        <div class="stat-card s-green"><div class="stat-icon">🟢</div><div class="stat-val" id="d-low">—</div><div class="stat-lbl">LOW</div></div>
-        <div class="stat-card"><div class="stat-icon" style="background:#F0F9FF;color:#0369A1">📅</div><div class="stat-val text-sm" style="font-size:13px;color:var(--text)" id="d-last">—</div><div class="stat-lbl">Deteksi Terakhir</div></div>
-      </div>
-
+  <!-- ══════════════════════════════════════ TRAFFIC ══ -->
+  <div class="page" id="page-traffic">
+    <div class="grid-3">
       <div class="card">
-        <div class="card-head">
-          <div class="card-title"><span class="ico2">🛡️</span> Riwayat Deteksi Anomali</div>
-          <div class="flex items-center gap8">
-            <select class="input" id="det-filter" onchange="loadDetections()">
-              <option value="">Semua Level</option>
-              <option value="HIGH">HIGH</option>
-              <option value="MEDIUM">MEDIUM</option>
-              <option value="LOW">LOW</option>
-            </select>
-            <button class="preview-btn" onclick="loadDetections()" style="font-size:11px;padding:4px 10px">Refresh</button>
-          </div>
+        <div class="card-head"><div class="card-title"><div class="card-title-icon cti-blue">📊</div>Ringkasan</div></div>
+        <div class="card-body" id="tr-summary"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title"><div class="card-title-icon cti-green">🔗</div>Top 15 URL</div></div>
+        <div class="card-body" id="tr-top-urls" style="display:flex;flex-direction:column;gap:5px"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title"><div class="card-title-icon cti-purple">🌐</div>Top 15 IP</div></div>
+        <div class="card-body" id="tr-top-ips" style="display:flex;flex-direction:column;gap:5px"></div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><div class="card-title"><div class="card-title-icon cti-teal">🔁</div>HTTP Methods</div></div>
+        <div class="card-body" id="tr-methods" style="display:flex;flex-direction:column;gap:5px"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title"><div class="card-title-icon cti-orange">🔗</div>Top Referrer</div></div>
+        <div class="card-body" id="tr-referrers" style="display:flex;flex-direction:column;gap:5px"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title"><div class="card-title-icon cti-red">❌</div>Top Error (4xx/5xx)</div></div>
+      <div class="card-body-p0 tbl-wrap">
+        <table>
+          <thead><tr><th>URL</th><th>Status</th><th>Jumlah</th></tr></thead>
+          <tbody id="tr-errors"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ THREATS ══ -->
+  <div class="page" id="page-threats">
+    <div class="stat-row stat-row-3">
+      <div class="scard sc-red">
+        <div class="scard-top"><div class="scard-icon">🚨</div></div>
+        <div class="scard-val" id="th-scanner">—</div>
+        <div class="scard-lbl">Scanner Terdeteksi</div>
+        <div class="scard-bar"></div>
+      </div>
+      <div class="scard sc-orange">
+        <div class="scard-top"><div class="scard-icon">⚠️</div></div>
+        <div class="scard-val" id="th-scan-att">—</div>
+        <div class="scard-lbl">Path Berbahaya</div>
+        <div class="scard-bar"></div>
+      </div>
+      <div class="scard sc-purple">
+        <div class="scard-top"><div class="scard-icon">🤖</div></div>
+        <div class="scard-val" id="th-highip">—</div>
+        <div class="scard-lbl">IP Threat Score Tinggi</div>
+        <div class="scard-bar"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title"><div class="card-title-icon cti-red">🎯</div>IP dengan Threat Score Tinggi</div></div>
+      <div class="card-body-p0 tbl-wrap">
+        <table>
+          <thead><tr><th>#</th><th>IP Address</th><th>Total Request</th><th>Error Count</th><th>Path Mencurigakan</th><th>Threat Score</th><th>Risiko</th></tr></thead>
+          <tbody id="th-ip-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title"><div class="card-title-icon cti-orange">⚠️</div>Scan / Exploit Attempts</div></div>
+      <div class="card-body-p0 tbl-wrap">
+        <table>
+          <thead><tr><th>Waktu</th><th>IP</th><th>URL yang Dicoba</th><th>Status</th><th>User Agent</th></tr></thead>
+          <tbody id="th-scan-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ DETECTIONS ══ -->
+  <div class="page" id="page-detections">
+    <div class="stat-row stat-row-4">
+      <div class="scard sc-red"><div class="scard-top"><div class="scard-icon">🔴</div></div><div class="scard-val" id="d-high">—</div><div class="scard-lbl">HIGH</div><div class="scard-bar"></div></div>
+      <div class="scard sc-orange"><div class="scard-top"><div class="scard-icon">🟡</div></div><div class="scard-val" id="d-med">—</div><div class="scard-lbl">MEDIUM</div><div class="scard-bar"></div></div>
+      <div class="scard sc-green"><div class="scard-top"><div class="scard-icon">🟢</div></div><div class="scard-val" id="d-low">—</div><div class="scard-lbl">LOW</div><div class="scard-bar"></div></div>
+      <div class="scard sc-teal"><div class="scard-top"><div class="scard-icon">📅</div></div><div class="scard-val" style="font-size:13px;color:var(--text)" id="d-last">—</div><div class="scard-lbl">Terakhir Terdeteksi</div><div class="scard-bar"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><div class="card-title-icon cti-red">🛡️</div>Riwayat Deteksi Anomali</div>
+        <div class="card-action">
+          <select class="inp" id="det-limit" onchange="loadDetections()">
+            <option value="50">50 terbaru</option>
+            <option value="100" selected>100 terbaru</option>
+            <option value="200">200 terbaru</option>
+          </select>
+          <button class="cbtn cbtn-sm cbtn-blue" onclick="loadDetections()">Refresh</button>
         </div>
-        <div class="card-body p0">
-          <div class="tbl-wrap">
-            <table>
-              <thead><tr><th>Waktu</th><th>URL</th><th>IF Score</th><th>Size Normal</th><th>Size Bot</th><th>Diff%</th><th>Cosine</th><th>Dict</th><th>Confidence</th><th>Level</th><th>Notif</th></tr></thead>
-              <tbody id="det-tbody"><tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">Memuat data...</td></tr></tbody>
-            </table>
-          </div>
+      </div>
+      <div class="card-body-p0 tbl-wrap">
+        <table>
+          <thead><tr><th>Waktu</th><th>URL</th><th>IF Score</th><th>Normal</th><th>Bot</th><th>Diff%</th><th>Cosine</th><th>Dict</th><th>Confidence</th><th>Level</th><th>WA</th></tr></thead>
+          <tbody id="det-body"><tr><td class="tbl-empty" colspan="11">Memuat...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ WEBSITE MONITOR ══ -->
+  <div class="page" id="page-monitor">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><div class="card-title-icon cti-blue">🖥️</div>Cek Website</div>
+        <div class="card-action">
+          <input class="inp" id="mon-url-input" value="{{ target_url }}" style="width:280px">
+          <button class="cbtn cbtn-blue" onclick="checkWebsite()">🔍 Cek Sekarang</button>
+          <button class="cbtn" onclick="checkBot()">🤖 Cek sebagai Bot</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="mon-result" style="color:var(--text3);font-size:12.5px;text-align:center;padding:20px">
+          Masukkan URL dan klik Cek Sekarang
         </div>
       </div>
     </div>
 
-    <!-- ════════════════════════════════════════════════════════
-         PAGE: PREVIEW WEBSITE
-    ════════════════════════════════════════════════════════ -->
-    <div class="page" id="page-preview">
-      <div class="card">
-        <div class="card-head">
-          <div class="card-title"><span class="ico2">🖥️</span> Preview Halaman Website</div>
-          <span class="text-muted text-sm">Lihat tampilan langsung dari target website</span>
-        </div>
-        <div class="card-body">
-          <div class="flex items-center gap8 mb16">
-            <input class="input" style="flex:1" id="preview-url-input" value="{{ target_url }}" placeholder="https://x.com">
-            <button class="preview-btn" onclick="loadPreview()">🔍 Load Preview</button>
-            <button class="preview-btn" onclick="loadPreviewBot()" style="background:#7C3AED">🤖 Lihat sebagai Bot</button>
-          </div>
-          <div id="preview-mode-info" style="margin-bottom:12px;font-size:12px;color:var(--text2)"></div>
-          <div class="preview-wrap">
-            <div class="preview-bar">
-              <div class="preview-dots"><span class="pd-r"></span><span class="pd-y"></span><span class="pd-g"></span></div>
-              <div class="preview-url" id="preview-url-bar">{{ target_url }}</div>
-            </div>
-            <iframe id="preview-iframe" class="preview-iframe" src="about:blank" sandbox="allow-scripts allow-same-origin"></iframe>
-          </div>
-          <div style="margin-top:12px;padding:12px;background:var(--orange-light);border:1px solid var(--orange-mid);border-radius:8px;font-size:12px;color:var(--orange)">
-            ⚠️ <strong>Catatan:</strong> Preview menampilkan halaman langsung dari server. Jika website memblokir iframe, gunakan tombol "Buka di tab baru" di atas. Mode Bot akan mengambil HTML via server proxy.
-          </div>
+    <!-- Target Website Monitor -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><div class="card-title-icon cti-green">✅</div>Monitor Website Target</div>
+        <div class="card-action">
+          <span style="font-size:11px;color:var(--text3)" id="mon-last-check">—</span>
+          <button class="cbtn cbtn-sm cbtn-blue" onclick="monitorTarget()">Refresh</button>
         </div>
       </div>
-
-      <!-- URL terdaftar dari top log -->
-      <div class="card">
-        <div class="card-head">
-          <div class="card-title"><span class="ico2">📋</span> URL dari Log Access — Klik untuk Preview</div>
-        </div>
-        <div class="card-body p0">
-          <div class="tbl-wrap">
-            <table>
-              <thead><tr><th>URL</th><th>Hit</th><th>Aksi</th></tr></thead>
-              <tbody id="preview-url-list"></tbody>
-            </table>
-          </div>
-        </div>
+      <div class="card-body" id="mon-target-result">
+        <div style="color:var(--text3);font-size:12px">Klik Refresh untuk memulai monitoring</div>
       </div>
     </div>
+
+    <!-- Preview Website -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><div class="card-title-icon cti-teal">👁️</div>Preview Halaman</div>
+        <div class="card-action">
+          <select class="inp" id="preview-mode">
+            <option value="normal">👤 Normal User</option>
+            <option value="bot">🤖 Googlebot</option>
+          </select>
+          <input class="inp" id="preview-url" value="{{ target_url }}" style="width:220px">
+          <button class="cbtn cbtn-blue" onclick="loadPreview()">Load Preview</button>
+          <button class="cbtn" onclick="window.open(document.getElementById('preview-url').value,'_blank')">↗ Buka Tab</button>
+        </div>
+      </div>
+      <div style="border-bottom:1px solid var(--border);background:var(--surface2);padding:8px 16px;display:flex;align-items:center;gap:8px">
+        <div style="display:flex;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:#FC615D;display:inline-block"></span><span style="width:10px;height:10px;border-radius:50%;background:#FDC24E;display:inline-block"></span><span style="width:10px;height:10px;border-radius:50%;background:#34C749;display:inline-block"></span></div>
+        <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:4px 10px;font-family:var(--fm);font-size:11px;color:var(--text2)" id="preview-addr">about:blank</div>
+        <div id="preview-mode-badge"></div>
+      </div>
+      <iframe id="preview-frame" src="about:blank" style="width:100%;height:520px;border:none;background:#fff"></iframe>
+    </div>
+  </div>
 
   </div><!-- /content -->
 </main>
-</div><!-- /layout -->
+</div><!-- /app -->
 
-<!-- Toast container -->
-<div class="toast-wrap" id="toast-wrap"></div>
+<div class="toasts" id="toasts"></div>
 
 <script>
-// ── State ─────────────────────────────────────────────────────
-const BASE = '{{ target_url }}';
-let logStats = null;
-let detStats = null;
-let sseSource = null;
-let liveCount = 0;
-const MAX_LIVE_ROWS = 200;
+// ── Global state ──────────────────────────────────────────────
+let logData = null, detData = null;
+let sseSource = null, ssePaused = false, liveRows = 0;
+const MAX_LIVE = 300;
+const PAGES = {
+  overview:'Overview',live:'Live Monitor',traffic:'Traffic Log',
+  threats:'Ancaman',detections:'Deteksi Anomali',monitor:'Website Monitor'
+};
 
-// ── Navigation ────────────────────────────────────────────────
-const pages = ['overview','live','stats','detections','preview'];
-const titles = {overview:'Overview',live:'Live Monitor',stats:'Statistik Log',detections:'Deteksi Anomali',preview:'Preview Website'};
+// ── Clock ─────────────────────────────────────────────────────
+function updateClock(){
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('id-ID',{hour12:false});
+}
+setInterval(updateClock, 1000); updateClock();
 
-function goto(page) {
-  pages.forEach(p => {
-    document.getElementById('page-'+p).classList.toggle('active', p===page);
-    const items = document.querySelectorAll('.nav-item');
-    items.forEach((el,i) => el.classList.toggle('active', el.getAttribute('onclick')?.includes(p)));
+// ── Sidebar toggle ─────────────────────────────────────────────
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// ── Navigation ─────────────────────────────────────────────────
+function goto(page, el){
+  Object.keys(PAGES).forEach(p=>{
+    document.getElementById('page-'+p).classList.toggle('active',p===page);
   });
-  document.getElementById('page-title').textContent = titles[page] || page;
-  if (page==='live') startSSE();
-  if (page==='stats') renderStats();
-  if (page==='detections') loadDetections();
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
+  document.getElementById('page-title').textContent = PAGES[page]||page;
+  if(page==='live') startSSE();
+  if(page==='traffic' && logData) renderTraffic();
+  if(page==='threats' && logData) renderThreats();
+  if(page==='detections') loadDetections();
+  if(page==='monitor') monitorTarget();
 }
 
-// ── Formatters ────────────────────────────────────────────────
-function fmtNum(n){ if(!n&&n!==0) return '—'; if(n>=1e6) return (n/1e6).toFixed(1)+'M'; if(n>=1e3) return (n/1e3).toFixed(1)+'K'; return n.toString(); }
-function fmtBytes(b){ if(b>=1073741824) return (b/1073741824).toFixed(2)+' GB'; if(b>=1048576) return (b/1048576).toFixed(2)+' MB'; if(b>=1024) return (b/1024).toFixed(1)+' KB'; return b+' B'; }
-function pct(a,t){ return t>0 ? (a/t*100).toFixed(1)+'%' : '0%'; }
-function statusClass(s){ if(s>=500) return 'le-500'; if(s>=400) return 'le-404'; if(s>=300) return 'le-301'; if(s>=200) return 'le-200'; return 'le-other-s'; }
-function statusBadgeClass(s){ if(s>=500) return 's5xx'; if(s>=400) return 's4xx'; if(s>=300) return 's3xx'; return 's2xx'; }
-function methodClass(m){ return {'GET':'le-get','POST':'le-post','PUT':'le-put','DELETE':'le-del'}[m]||'le-other'; }
+// ── Formatters ─────────────────────────────────────────────────
+const fmtN = n=>{if(!n&&n!==0)return'—';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return String(n)};
+const fmtB = b=>{if(!b)return'—';if(b>=1073741824)return(b/1073741824).toFixed(2)+' GB';if(b>=1048576)return(b/1048576).toFixed(2)+' MB';if(b>=1024)return(b/1024).toFixed(1)+' KB';return b+' B'};
+const pct  = (a,t)=>t>0?(a/t*100).toFixed(1)+'%':'0%';
+const scls = s=>{if(s>=500)return'ls-5xx';if(s>=400)return'ls-4xx';if(s>=300)return'ls-3xx';if(s>=200)return'ls-2xx';return'ls-other'};
+const sbcls= s=>{if(s>=500)return'b-5xx';if(s>=400)return'b-4xx';if(s>=300)return'b-3xx';return'b-2xx'};
+const mcls = m=>({'GET':'lc-GET','POST':'lc-POST','PUT':'lc-PUT','DELETE':'lc-DELETE','HEAD':'lc-HEAD'}[m]||'lc-other');
+const agentBadge = t=>({
+  search_bot:`<span class="badge b-bot">Bot</span>`,
+  monitor:`<span class="badge b-monitor">Monitor</span>`,
+  scanner:`<span class="badge b-scanner">⚠ Scanner</span>`,
+  crawler:`<span class="badge b-bot">Crawler</span>`,
+  human:`<span class="badge b-human">User</span>`,
+}[t]||`<span class="badge b-neutral">${t}</span>`);
 
-// ── Toast ─────────────────────────────────────────────────────
-function toast(msg){ const d=document.createElement('div'); d.className='toast'; d.textContent=msg; document.getElementById('toast-wrap').appendChild(d); setTimeout(()=>d.remove(),3000); }
-
-// ── Progress bar builder ───────────────────────────────────────
-function progressBars(items, colorFn, maxVal){
-  if(!items||!items.length) return '<div class="text-muted text-sm">Tidak ada data</div>';
-  const max = maxVal || Math.max(...items.map(i=>i.count||i.value||0))||1;
-  return items.map((item,idx)=>{
-    const label = item.url||item.ip||item.ua||item.key||'—';
-    const count = item.count||item.value||0;
-    const pctW  = Math.max(3, count/max*100);
-    const color = colorFn(idx);
-    return `<div class="progress-row">
-      <div class="progress-label" title="${label}">${label}</div>
-      <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pctW}%;background:${color}"></div></div>
-      <div class="progress-count">${fmtNum(count)}</div>
-    </div>`;
-  }).join('');
+// ── Progress bar builder ────────────────────────────────────────
+function pbar(label, val, max, color='var(--blue)', valFmt=null){
+  const w = Math.max(2, max>0?val/max*100:0);
+  return `<div class="pbar-row">
+    <div class="pbar-label" title="${label}">${label}</div>
+    <div class="pbar-track"><div class="pbar-fill" style="width:${w}%;background:${color}"></div></div>
+    <div class="pbar-val">${valFmt||fmtN(val)}</div>
+  </div>`;
 }
 
-const COLORS_BLUE   = ['#2563EB','#3B82F6','#60A5FA','#93C5FD','#BFDBFE','#DBEAFE','#EFF6FF','#1D4ED8','#1E40AF','#1E3A8A'];
-const COLORS_GREEN  = ['#059669','#10B981','#34D399','#6EE7B7','#A7F3D0'];
-const COLORS_PURPLE = ['#7C3AED','#8B5CF6','#A78BFA','#C4B5FD','#DDD6FE'];
-const COLORS_MIX    = ['#2563EB','#7C3AED','#059669','#D97706','#DC2626','#0891B2','#0D9488','#9333EA','#C026D3','#E11D48'];
+const COLORS10 = ['#2563EB','#7C3AED','#059669','#D97706','#DC2626',
+                  '#0891B2','#0D9488','#9333EA','#C026D3','#E11D48'];
 
-// ── Load log analytics ────────────────────────────────────────
+// ── Toast ───────────────────────────────────────────────────────
+function toast(msg, type='info'){
+  const colors={info:'#1E293B',ok:'#14532D',err:'#450A0A',warn:'#451A03'};
+  const d=document.createElement('div');
+  d.className='toast'; d.style.background=colors[type]||colors.info;
+  d.textContent=msg;
+  document.getElementById('toasts').appendChild(d);
+  setTimeout(()=>d.remove(),3500);
+}
+
+// ── setSysStatus ─────────────────────────────────────────────
+function setSys(ok, msg=''){
+  const dot=document.getElementById('sys-dot');
+  const lbl=document.getElementById('sys-title');
+  dot.className='sys-dot '+(ok?'live':'error');
+  lbl.textContent=ok?'Sistem Aktif':'Koneksi Gagal';
+}
+
+// ── loadLogStats ─────────────────────────────────────────────
 async function loadLogStats(){
   try{
-    const r = await fetch('/api/log-stats');
-    logStats = await r.json();
-    if(logStats.error && !logStats.total){ toast('⚠️ '+logStats.error); return; }
-    updateOverview();
-    document.getElementById('last-update').textContent = 'Update: '+new Date().toLocaleTimeString('id-ID');
-    setSysStatus(true);
-  }catch(e){ setSysStatus(false); toast('Gagal memuat statistik log'); }
+    const r=await fetch('/api/log-stats');
+    logData=await r.json();
+    if(logData.error&&!logData.total){setSys(false);toast('⚠ '+logData.error,'warn');return;}
+    setSys(true);
+    renderOverview();
+    document.getElementById('ov-date-range').textContent=
+      (logData.first_entry||'')+(logData.last_entry?' — '+logData.last_entry:'');
+  }catch(e){setSys(false);toast('Gagal memuat log stats','err');}
 }
 
 async function loadDetStats(){
   try{
-    const r = await fetch('/api/stats');
-    detStats = await r.json();
-    // Overview anomali cards
-    document.getElementById('ov-high').textContent   = fmtNum(detStats.high||0);
-    document.getElementById('ov-medium').textContent = fmtNum(detStats.medium||0);
-    document.getElementById('ov-low').textContent    = fmtNum(detStats.low||0);
-    document.getElementById('ov-analyzed').textContent = fmtNum(detStats.total_analyzed||0);
-    // Deteksi page
-    document.getElementById('d-high').textContent   = fmtNum(detStats.high||0);
-    document.getElementById('d-medium').textContent = fmtNum(detStats.medium||0);
-    document.getElementById('d-low').textContent    = fmtNum(detStats.low||0);
-    document.getElementById('d-last').textContent   = detStats.last_detection||'—';
+    const r=await fetch('/api/stats'); detData=await r.json();
+    ['high','med','low'].forEach(k=>{
+      const v=detData[k==='med'?'medium':k]||0;
+      document.getElementById('ov-'+k).textContent=fmtN(v);
+      document.getElementById('d-'+k).textContent=fmtN(v);
+    });
+    document.getElementById('d-last').textContent=(detData.last_detection||'—').substring(0,19);
+    // Update badges
+    const hi=detData.high||0;
+    document.getElementById('det-badge').textContent=hi>0?hi:'';
+    document.getElementById('det-badge').style.display=hi>0?'flex':'none';
   }catch(e){}
 }
 
-function setSysStatus(ok){
-  const dot = document.getElementById('sys-dot');
-  const lbl = document.getElementById('sys-label');
-  dot.className = 'dot pulse '+(ok?'ok':'error');
-  lbl.textContent = ok?'Sistem Aktif':'Koneksi Gagal';
-}
+// ── renderOverview ───────────────────────────────────────────
+function renderOverview(){
+  if(!logData) return;
+  const t=logData.total||0;
+  document.getElementById('ov-total').textContent=fmtN(t);
+  document.getElementById('ov-2xx').textContent=fmtN(logData.status_2xx||0);
+  document.getElementById('ov-4xx').textContent=fmtN(logData.status_4xx||0);
+  document.getElementById('ov-5xx').textContent=fmtN(logData.status_5xx||0);
+  document.getElementById('ov-bot').textContent=fmtN(logData.bot_count||0);
+  document.getElementById('ov-bytes').textContent=fmtB(logData.total_bytes||0);
+  document.getElementById('ov-2xx-pct').textContent=pct(logData.status_2xx,t);
+  document.getElementById('ov-4xx-pct').textContent=pct(logData.status_4xx,t);
+  document.getElementById('ov-5xx-pct').textContent=pct(logData.status_5xx,t);
+  document.getElementById('ov-bot-pct').textContent=pct(logData.bot_count,t);
+  document.getElementById('ov-scanner').textContent=fmtN(logData.scanner_count||0);
+  document.getElementById('ov-size-avg').textContent=`avg ${fmtB(logData.avg_size||0)} / req`;
 
-function updateOverview(){
-  if(!logStats) return;
-  const t = logStats.total||0;
-  document.getElementById('ov-total').textContent  = fmtNum(t);
-  document.getElementById('ov-2xx').textContent    = fmtNum(logStats.status_2xx||0);
-  document.getElementById('ov-4xx').textContent    = fmtNum(logStats.status_4xx||0);
-  document.getElementById('ov-5xx').textContent    = fmtNum(logStats.status_5xx||0);
-  document.getElementById('ov-bots').textContent   = fmtNum(logStats.bot_count||0);
-  document.getElementById('ov-bytes').textContent  = fmtBytes(logStats.total_bytes||0);
-  document.getElementById('ov-2xx-pct').textContent  = pct(logStats.status_2xx, t);
-  document.getElementById('ov-4xx-pct').textContent  = pct(logStats.status_4xx, t);
-  document.getElementById('ov-5xx-pct').textContent  = pct(logStats.status_5xx, t);
-  document.getElementById('ov-bot-pct').textContent  = pct(logStats.bot_count, t);
+  // Threat badge
+  const th=(logData.threat_ips||[]).length;
+  document.getElementById('threat-badge').textContent=th>0?th:'';
+  document.getElementById('threat-badge').style.display=th>0?'flex':'none';
 
-  // Top URLs chart
-  document.getElementById('top-urls-chart').innerHTML =
-    progressBars(logStats.top_urls||[], i=>COLORS_BLUE[i%10]);
-
-  // Status chart
-  const sd = logStats.status_detail||{};
-  const statusItems = Object.entries(sd).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k,v])=>({url:k,count:v}));
-  document.getElementById('status-chart').innerHTML =
-    progressBars(statusItems, i=>['#059669','#2563EB','#D97706','#DC2626'][Math.min(i,3)]);
-
-  // Top IPs
-  document.getElementById('top-ips-chart').innerHTML =
-    progressBars(logStats.top_ips||[], i=>COLORS_MIX[i%10]);
-
-  // Donut bot vs normal
-  const bn = logStats.bot_count||0, nm = logStats.normal_count||0, tot = bn+nm;
-  if(tot>0){
-    const botPct    = bn/tot*100;
-    const normalPct = nm/tot*100;
-    document.getElementById('donut-bot').setAttribute('stroke-dasharray', botPct.toFixed(1)+' '+(100-botPct).toFixed(1));
-    const offset = 100 - botPct;
-    document.getElementById('donut-normal').setAttribute('stroke-dasharray', normalPct.toFixed(1)+' '+(100-normalPct).toFixed(1));
-    document.getElementById('donut-normal').setAttribute('stroke-dashoffset', offset.toFixed(1));
-    document.getElementById('donut-pct').textContent = botPct.toFixed(0)+'%';
-    document.getElementById('leg-bot').textContent    = `Bot (${fmtNum(bn)})`;
-    document.getElementById('leg-normal').textContent = `Normal (${fmtNum(nm)})`;
+  // Hourly chart
+  const hourly=logData.hourly||{};
+  const maxReq=Math.max(...Object.values(hourly).map(h=>h.requests||0),1);
+  const hEl=document.getElementById('hourly-chart');
+  hEl.innerHTML='';
+  for(let h=0;h<24;h++){
+    const data=hourly[h]||{requests:0,errors:0,bots:0};
+    const rH=Math.max(2,data.requests/maxReq*60);
+    const div=document.createElement('div'); div.className='hour-bar';
+    div.title=`${String(h).padStart(2,'0')}:00 — ${data.requests} req, ${data.errors} err, ${data.bots} bot`;
+    div.innerHTML=`<div style="position:relative;width:100%;height:60px;display:flex;flex-direction:column;justify-content:flex-end">
+      <div class="hour-bar-fill" style="background:var(--purple);height:${Math.max(1,data.bots/maxReq*60)}px;opacity:.6"></div>
+      <div class="hour-bar-fill" style="background:var(--red);height:${Math.max(1,data.errors/maxReq*60)}px;opacity:.8;margin-top:1px"></div>
+      <div class="hour-bar-fill" style="background:var(--blue);height:${rH}px;opacity:.85;margin-top:1px"></div>
+    </div>
+    <div class="hour-label">${h%6===0?String(h).padStart(2,'0'):''}</div>`;
+    hEl.appendChild(div);
   }
 
-  // Method bars
-  const mc = logStats.method_counts||{};
-  const mMax = Math.max(...Object.values(mc))||1;
-  const mColors = {GET:'#2563EB',POST:'#059669',PUT:'#7C3AED',DELETE:'#DC2626',HEAD:'#D97706'};
-  document.getElementById('method-bars').innerHTML = Object.entries(mc).map(([m,c])=>`
-    <div class="progress-row">
-      <div class="progress-label" style="color:${mColors[m]||'#64748B'};font-weight:600">${m}</div>
-      <div class="progress-bar-wrap"><div class="progress-bar" style="width:${c/mMax*100}%;background:${mColors[m]||'#64748B'}"></div></div>
-      <div class="progress-count">${fmtNum(c)}</div>
-    </div>`).join('');
+  // Status breakdown
+  const sd=logData.status_detail||{};
+  const maxS=Math.max(...Object.values(sd),1);
+  const scColors={'2':'var(--green)','3':'var(--teal)','4':'var(--orange)','5':'var(--red)'};
+  document.getElementById('ov-status-bars').innerHTML=
+    Object.entries(sd).sort((a,b)=>parseInt(a[0])-parseInt(b[0])).map(([code,cnt])=>
+      pbar(code,cnt,maxS,scColors[code[0]]||'var(--blue)',fmtN(cnt))
+    ).join('');
 
-  // Suspicious IPs
-  const sus = logStats.suspicious_ips||[];
-  document.getElementById('suspicious-tbody').innerHTML = sus.length
-    ? sus.map((s,i)=>`<tr>
-        <td class="mono text-muted">${i+1}</td>
-        <td class="mono" style="color:var(--red)">${s.ip}</td>
-        <td><span class="status-badge s4xx">${fmtNum(s.count)} error</span></td>
-        <td><span class="level-badge level-${s.count>50?'HIGH':s.count>10?'MEDIUM':'LOW'}">${s.count>50?'HIGH RISK':s.count>10?'MEDIUM RISK':'LOW RISK'}</span></td>
+  // Top URLs
+  const urlMax=(logData.top_urls||[])[0]?.count||1;
+  document.getElementById('ov-top-urls').innerHTML=
+    (logData.top_urls||[]).slice(0,10).map((u,i)=>pbar(u.url,u.count,urlMax,COLORS10[i%10])).join('');
+
+  // Top IPs
+  const ipMax=(logData.top_ips||[])[0]?.count||1;
+  document.getElementById('ov-top-ips').innerHTML=
+    (logData.top_ips||[]).slice(0,10).map((ip,i)=>{
+      const tColor=ip.threat>=70?'var(--red)':ip.threat>=40?'var(--orange)':'var(--blue)';
+      return pbar(ip.ip,ip.count,ipMax,COLORS10[i%10]);
+    }).join('');
+}
+
+// ── renderTraffic ─────────────────────────────────────────────
+function renderTraffic(){
+  if(!logData) return;
+  const t=logData.total||0;
+  const agc=logData.agent_counts||{};
+
+  document.getElementById('tr-summary').innerHTML=`
+    <div class="pbar-row"><div class="pbar-label">Total Request</div><div class="pbar-track" style="background:none"><b style="font-family:var(--fm)">${fmtN(t)}</b></div></div>
+    ${pbar('2xx Sukses',logData.status_2xx||0,t,'var(--green)',pct(logData.status_2xx,t))}
+    ${pbar('3xx Redirect',logData.status_3xx||0,t,'var(--teal)',pct(logData.status_3xx,t))}
+    ${pbar('4xx Error',logData.status_4xx||0,t,'var(--orange)',pct(logData.status_4xx,t))}
+    ${pbar('5xx Server Error',logData.status_5xx||0,t,'var(--red)',pct(logData.status_5xx,t))}
+    <div class="div"></div>
+    <div class="pbar-row"><div class="pbar-label">Data Transfer</div><div class="pbar-track" style="background:none"><b style="font-family:var(--fm)">${fmtB(logData.total_bytes||0)}</b></div></div>
+    <div class="pbar-row"><div class="pbar-label">Avg Size/Req</div><div class="pbar-track" style="background:none"><b style="font-family:var(--fm)">${fmtB(logData.avg_size||0)}</b></div></div>
+    <div class="pbar-row"><div class="pbar-label">Log Size</div><div class="pbar-track" style="background:none"><b style="font-family:var(--fm)">${logData.log_size_mb} MB</b></div></div>
+  `;
+
+  const urlMax=(logData.top_urls||[])[0]?.count||1;
+  document.getElementById('tr-top-urls').innerHTML=
+    (logData.top_urls||[]).map((u,i)=>pbar(u.url,u.count,urlMax,COLORS10[i%10])).join('');
+
+  const ipMax=(logData.top_ips||[])[0]?.count||1;
+  document.getElementById('tr-top-ips').innerHTML=
+    (logData.top_ips||[]).map((ip,i)=>pbar(ip.ip,ip.count,ipMax,COLORS10[i%10])).join('');
+
+  const mc=logData.method_counts||{};
+  const mMax=Math.max(...Object.values(mc),1);
+  const mColors={GET:'var(--blue)',POST:'var(--green)',PUT:'var(--purple)',DELETE:'var(--red)',HEAD:'var(--text3)'};
+  document.getElementById('tr-methods').innerHTML=
+    Object.entries(mc).sort((a,b)=>b[1]-a[1]).map(([m,c])=>pbar(m,c,mMax,mColors[m]||'var(--teal)')).join('');
+
+  const rMax=(logData.top_referrers||[])[0]?.count||1;
+  document.getElementById('tr-referrers').innerHTML=(logData.top_referrers||[]).length
+    ? (logData.top_referrers||[]).map((r,i)=>pbar(r.url,r.count,rMax,COLORS10[i%10])).join('')
+    : '<div style="color:var(--text3);font-size:12px">Tidak ada referrer</div>';
+
+  const errs=logData.top_errors||[];
+  document.getElementById('tr-errors').innerHTML=errs.length
+    ? errs.map(e=>`<tr>
+        <td style="font-family:var(--fm);color:var(--text)">${e.url}</td>
+        <td><span class="badge ${sbcls(e.status)}">${e.status}</span></td>
+        <td style="font-weight:600;font-family:var(--fm)">${fmtN(e.count)}</td>
       </tr>`).join('')
-    : '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text3)">Tidak ada IP mencurigakan</td></tr>';
-
-  // Preview URL list
-  const urls = logStats.top_urls||[];
-  document.getElementById('preview-url-list').innerHTML = urls.map(u=>`<tr>
-    <td class="mono" style="color:var(--blue)">${u.url}</td>
-    <td><span class="status-badge s2xx">${fmtNum(u.count)}</span></td>
-    <td><button class="preview-btn" onclick="previewURL('${BASE}${u.url}')" style="font-size:11px;padding:3px 10px">Preview</button></td>
-  </tr>`).join('');
+    : '<tr><td class="tbl-empty" colspan="3">Tidak ada error</td></tr>';
 }
 
-// ── Stats page ────────────────────────────────────────────────
-function renderStats(){
-  if(!logStats){ loadLogStats().then(renderStats); return; }
-  const t = logStats.total||0;
+// ── renderThreats ─────────────────────────────────────────────
+function renderThreats(){
+  if(!logData) return;
+  document.getElementById('th-scanner').textContent=fmtN(logData.scanner_count||0);
+  document.getElementById('th-scan-att').textContent=fmtN((logData.scan_attempts||[]).length);
+  document.getElementById('th-highip').textContent=fmtN((logData.threat_ips||[]).length);
 
-  // Summary
-  document.getElementById('stats-summary').innerHTML = `
-    <div class="progress-row"><div class="progress-label">Total Request</div><div class="progress-bar-wrap" style="background:none"><b class="mono">${fmtNum(t)}</b></div></div>
-    <div class="progress-row"><div class="progress-label">2xx Sukses</div><div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct(logStats.status_2xx,t)};background:#059669;border-radius:4px;height:7px"></div></div><div class="progress-count">${pct(logStats.status_2xx,t)}</div></div>
-    <div class="progress-row"><div class="progress-label">4xx Error</div><div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct(logStats.status_4xx,t)};background:#D97706;border-radius:4px;height:7px"></div></div><div class="progress-count">${pct(logStats.status_4xx,t)}</div></div>
-    <div class="progress-row"><div class="progress-label">5xx Error</div><div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct(logStats.status_5xx,t)};background:#DC2626;border-radius:4px;height:7px"></div></div><div class="progress-count">${pct(logStats.status_5xx,t)}</div></div>
-    <div class="progress-row"><div class="progress-label">Bot Traffic</div><div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct(logStats.bot_count,t)};background:#7C3AED;border-radius:4px;height:7px"></div></div><div class="progress-count">${pct(logStats.bot_count,t)}</div></div>
-    <div class="progress-row"><div class="progress-label">Data Transfer</div><div class="progress-bar-wrap" style="background:none"><b class="mono">${fmtBytes(logStats.total_bytes||0)}</b></div></div>`;
+  const ips=logData.threat_ips||[];
+  document.getElementById('th-ip-body').innerHTML=ips.length
+    ? ips.map((ip,i)=>{
+        const tc=ip.threat>=70?'tf-high':ip.threat>=40?'tf-mid':'tf-low';
+        const risk=ip.threat>=70?'<span class="badge b-high">HIGH</span>':ip.threat>=40?'<span class="badge b-medium">MEDIUM</span>':'<span class="badge b-low">LOW</span>';
+        return `<tr>
+          <td style="color:var(--text3);font-family:var(--fm)">${i+1}</td>
+          <td style="font-family:var(--fm);font-weight:600;color:var(--red)">${ip.ip}</td>
+          <td style="font-family:var(--fm)">${fmtN(ip.count)}</td>
+          <td><span style="color:var(--orange);font-weight:600">${fmtN(ip.errors)}</span></td>
+          <td><span class="badge ${ip.suspicious>0?'b-sus':'b-neutral'}">${ip.suspicious}</span></td>
+          <td><div style="display:flex;align-items:center;gap:8px">
+            <div class="threat-bar"><div class="threat-fill ${tc}" style="width:${ip.threat}%"></div></div>
+            <span style="font-family:var(--fm);font-size:11.5px;font-weight:600">${ip.threat}</span>
+          </div></td>
+          <td>${risk}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td class="tbl-empty" colspan="7">Tidak ada IP dengan threat score tinggi</td></tr>';
 
-  document.getElementById('stats-top-urls').innerHTML = progressBars(logStats.top_urls||[], i=>COLORS_BLUE[i%10]);
-  document.getElementById('stats-top-ips').innerHTML  = progressBars(logStats.top_ips||[], i=>COLORS_MIX[i%10]);
-
-  // UA
-  const ua = (logStats.top_ua||[]).map(u=>({...u, url:u.ua}));
-  document.getElementById('stats-top-ua').innerHTML = progressBars(ua, i=>COLORS_PURPLE[i%5]);
-
-  // Status detail
-  const sd = logStats.status_detail||{};
-  document.getElementById('stats-status-dist').innerHTML = Object.entries(sd).sort((a,b)=>b[1]-a[1]).map(([code,cnt])=>{
-    const cls = statusBadgeClass(parseInt(code));
-    return `<div class="progress-row">
-      <div class="progress-label"><span class="status-badge ${cls}">${code}</span></div>
-      <div class="progress-bar-wrap"><div class="progress-bar" style="width:${cnt/(Math.max(...Object.values(sd)))*100}%;background:${code>=500?'#DC2626':code>=400?'#D97706':code>=300?'#2563EB':'#059669'};border-radius:4px;height:7px"></div></div>
-      <div class="progress-count">${fmtNum(cnt)}</div>
-    </div>`;
-  }).join('');
+  const scans=logData.scan_attempts||[];
+  document.getElementById('th-scan-body').innerHTML=scans.length
+    ? scans.map(s=>`<tr class="${s.suspicious?'sus-row':''}">
+        <td style="font-family:var(--fm);font-size:11px;color:var(--text3)">${s.time}</td>
+        <td style="font-family:var(--fm);color:var(--red);font-weight:600">${s.ip}</td>
+        <td style="font-family:var(--fm);color:var(--orange)">${s.url}</td>
+        <td><span class="badge ${sbcls(s.status)}">${s.status}</span></td>
+        <td style="color:var(--text3);font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.agent}</td>
+      </tr>`).join('')
+    : '<tr><td class="tbl-empty" colspan="5">Tidak ada aktivitas mencurigakan</td></tr>';
 }
 
-// ── Detections ────────────────────────────────────────────────
+// ── loadDetections ─────────────────────────────────────────────
 async function loadDetections(){
-  const tbody = document.getElementById('det-tbody');
-  tbody.innerHTML='<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--text3)">Memuat...</td></tr>';
+  const lim=document.getElementById('det-limit').value;
+  const body=document.getElementById('det-body');
+  body.innerHTML='<tr><td class="tbl-empty" colspan="11">Memuat...</td></tr>';
   try{
-    const r = await fetch('/api/detections?limit=100');
-    const data = await r.json();
-    if(!data.length){
-      tbody.innerHTML='<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">Belum ada deteksi anomali</td></tr>';
-      return;
-    }
-    tbody.innerHTML = data.map(d=>`<tr>
-      <td class="mono text-sm">${d.detected_at||'—'}</td>
-      <td class="mono" style="color:var(--blue)">${d.url||'—'}</td>
-      <td class="mono">${d.anomaly_score!=null?d.anomaly_score.toFixed(4):'—'}</td>
-      <td class="mono">${d.size_normal!=null?fmtBytes(d.size_normal):'—'}</td>
-      <td class="mono">${d.size_bot!=null?fmtBytes(d.size_bot):'—'}</td>
-      <td class="mono ${d.size_diff_pct>50?'s5xx':d.size_diff_pct>20?'s4xx':''}">${d.size_diff_pct!=null?d.size_diff_pct.toFixed(1)+'%':'—'}</td>
-      <td class="mono">${d.cosine_sim!=null?d.cosine_sim.toFixed(4):'—'}</td>
-      <td class="mono">${d.dict_hit_count||0}</td>
-      <td><div style="display:flex;align-items:center;gap:6px"><div style="width:40px;height:5px;border-radius:3px;background:var(--border);overflow:hidden"><div style="width:${d.confidence||0}%;height:100%;background:${d.confidence>=80?'#DC2626':d.confidence>=50?'#D97706':'#059669'}"></div></div><span class="mono text-sm">${d.confidence||0}</span></div></td>
-      <td><span class="level-badge level-${d.level||'LOW'}">${d.level||'—'}</span></td>
-      <td>${d.notified?'<span style="color:var(--green)">✅</span>':'<span style="color:var(--text3)">—</span>'}</td>
-    </tr>`).join('');
-  }catch(e){ toast('Gagal memuat deteksi'); }
+    const r=await fetch('/api/detections?limit='+lim);
+    const data=await r.json();
+    if(!data.length){body.innerHTML='<tr><td class="tbl-empty" colspan="11">Belum ada deteksi anomali</td></tr>';return;}
+    body.innerHTML=data.map(d=>{
+      const conf=d.confidence||0;
+      const cColor=conf>=80?'var(--red)':conf>=50?'var(--orange)':'var(--green)';
+      return `<tr>
+        <td style="font-family:var(--fm);font-size:11px;color:var(--text3)">${(d.detected_at||'').substring(0,19)}</td>
+        <td style="font-family:var(--fm);color:var(--blue);font-weight:500">${d.url||'—'}</td>
+        <td style="font-family:var(--fm)">${d.anomaly_score!=null?d.anomaly_score.toFixed(4):'—'}</td>
+        <td style="font-family:var(--fm)">${d.size_normal!=null?fmtB(d.size_normal):'—'}</td>
+        <td style="font-family:var(--fm)">${d.size_bot!=null?fmtB(d.size_bot):'—'}</td>
+        <td style="font-family:var(--fm);color:${d.size_diff_pct>50?'var(--red)':d.size_diff_pct>20?'var(--orange)':'var(--text)'}">${d.size_diff_pct!=null?d.size_diff_pct.toFixed(1)+'%':'—'}</td>
+        <td style="font-family:var(--fm)">${d.cosine_sim!=null?d.cosine_sim.toFixed(4):'—'}</td>
+        <td style="font-family:var(--fm)">${d.dict_hit_count||0}</td>
+        <td><div style="display:flex;align-items:center;gap:7px">
+          <div style="width:48px;height:5px;background:var(--surface3);border-radius:3px;overflow:hidden">
+            <div style="width:${conf}%;height:100%;background:${cColor}"></div>
+          </div>
+          <span style="font-family:var(--fm);font-size:11.5px;font-weight:600">${conf}</span>
+        </div></td>
+        <td><span class="badge b-${(d.level||'low').toLowerCase()}">${d.level||'—'}</span></td>
+        <td>${d.notified?'<span style="color:var(--green);font-size:14px">✓</span>':'<span style="color:var(--text4)">—</span>'}</td>
+      </tr>`;
+    }).join('');
+  }catch(e){toast('Gagal memuat deteksi','err');}
 }
 
 // ── Live log SSE ──────────────────────────────────────────────
 function startSSE(){
-  if(sseSource){ sseSource.close(); }
-  const container = document.getElementById('live-log-container');
-
-  sseSource = new EventSource('/api/live-log');
-  sseSource.onopen = ()=>{ document.getElementById('stream-badge').style.opacity='1'; };
-  sseSource.onmessage = (e)=>{
-    const d = JSON.parse(e.data);
-    if(d.error){ toast('Log error: '+d.error); return; }
-    appendLogRow(container, d);
+  if(sseSource){sseSource.close();}
+  const wrap=document.getElementById('live-container');
+  sseSource=new EventSource('/api/live-log');
+  sseSource.onmessage=e=>{
+    if(ssePaused) return;
+    const d=JSON.parse(e.data);
+    if(d.error){toast('Log: '+d.error,'warn');return;}
+    appendLiveRow(wrap,d);
   };
-  sseSource.onerror = ()=>{
-    sseSource.close();
-    // Fallback to polling
-    setTimeout(()=>{ loadTailLog(); }, 2000);
+  sseSource.onerror=()=>{
+    document.getElementById('live-status-badge').className='badge b-err';
+    document.getElementById('live-status-badge').textContent='Disconnected';
+    setTimeout(loadTail,3000);
   };
 }
 
-function appendLogRow(container, d){
-  // Remove empty state
-  const empty = container.querySelector('.log-empty');
+function appendLiveRow(wrap,d){
+  const empty=wrap.querySelector('.live-empty');
   if(empty) empty.remove();
+  const row=document.createElement('div');
+  row.className='log-row'+(d.suspicious?' sus-row':'');
+  const sc=scls(d.status), mc=mcls(d.method);
+  row.innerHTML=`
+    <span class="lc-time">${(d.time_str||'').slice(-8)||'—'}</span>
+    <span class="lc-ip">${d.ip||'—'}</span>
+    <span class="lc-method ${mc}">${d.method||'—'}</span>
+    <span class="lc-url" title="${d.url||''}">${d.url||'—'}</span>
+    <span class="lc-status ${sc}">${d.status||'—'}</span>
+    <span class="lc-size">${d.size?fmtB(d.size):'—'}</span>
+    <span class="lc-type" title="${d.useragent||''}">${agentBadge(d.agent_type)}</span>`;
+  wrap.insertBefore(row,wrap.firstChild);
+  liveRows++;
+  if(liveRows>MAX_LIVE){wrap.removeChild(wrap.lastChild);liveRows--;}
+}
 
-  const row = document.createElement('div');
-  row.className = 'log-entry';
-  const sc = statusClass(d.status);
-  const mc = methodClass(d.method);
-  row.innerHTML = `
-    <span class="le-time">${(d.time_str||'').substring(12)||'—'}</span>
-    <span class="le-ip">${d.ip||'—'}</span>
-    <span class="le-method ${mc}">${d.method||'—'}</span>
-    <span class="le-url" title="${d.url||''}">${d.url||'—'}</span>
-    <span class="le-status ${sc}">${d.status||'—'}</span>
-    <span class="le-size">${d.size?fmtBytes(d.size):'-'}</span>
-    <span class="le-bot-tag">${d.is_bot?'BOT':''}</span>`;
+function clearLive(){
+  const w=document.getElementById('live-container');
+  w.innerHTML='<div class="live-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Menunggu log masuk...</div>';
+  liveRows=0;
+}
 
-  container.insertBefore(row, container.firstChild);
-  liveCount++;
-  if(liveCount > MAX_LIVE_ROWS){
-    container.removeChild(container.lastChild);
-    liveCount--;
+function togglePause(){
+  ssePaused=!ssePaused;
+  document.getElementById('pause-btn').textContent=ssePaused?'Resume':'Pause';
+  document.getElementById('pause-btn').className='cbtn cbtn-sm'+(ssePaused?' cbtn-blue':'');
+}
+
+// ── Tail log ──────────────────────────────────────────────────
+async function loadTail(){
+  const n=document.getElementById('tail-n').value;
+  try{
+    const r=await fetch('/api/tail-log?n='+n);
+    const data=await r.json();
+    if(data.error){toast('⚠ '+data.error,'warn');return;}
+    document.getElementById('tail-body').innerHTML=(data.lines||[]).map(d=>`<tr>
+      <td style="font-family:var(--fm);font-size:11px;color:var(--text3)">${d.time_str||'—'}</td>
+      <td style="font-family:var(--fm);color:var(--blue)">${d.ip||'—'}</td>
+      <td style="font-family:var(--fm)" class="${mcls(d.method)}">${d.method||'—'}</td>
+      <td style="font-family:var(--fm);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.url||''}">${d.url||'—'}</td>
+      <td><span class="badge ${sbcls(d.status)}">${d.status||'—'}</span></td>
+      <td style="font-family:var(--fm);color:var(--text3)">${d.size?fmtB(d.size):'—'}</td>
+      <td>${agentBadge(d.agent_type||'human')}</td>
+      <td style="color:var(--text3);font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.useragent||''}">${d.useragent||'—'}</td>
+    </tr>`).join('')||'<tr><td class="tbl-empty" colspan="8">Tidak ada data</td></tr>';
+  }catch(e){toast('Gagal memuat log','err');}
+}
+
+// ── Website Monitor ───────────────────────────────────────────
+async function checkWebsite(mode='normal'){
+  const url=document.getElementById('mon-url-input').value.trim()||'{{ target_url }}';
+  document.getElementById('mon-result').innerHTML='<div style="color:var(--text3)">Mengecek...</div>';
+  try{
+    const r=await fetch(`/api/monitor?url=${encodeURIComponent(url)}`);
+    const data=await r.json();
+    renderMonitorResult(data);
+  }catch(e){toast('Gagal cek website','err');}
+}
+
+function checkBot(){checkWebsite('bot');}
+
+function renderMonitorResult(data){
+  const n=data.normal||{};
+  const b=data.bot||{};
+  const ok=n.ok;
+  const statusCls=ok?'up':n.status===0?'down':'warn';
+  const diff=data.size_diff_pct||0;
+  const diffColor=diff>20?'var(--red)':diff>10?'var(--orange)':'var(--green)';
+
+  document.getElementById('mon-result').innerHTML=`
+    <div class="grid-2" style="gap:16px">
+      <div class="monitor-card ${statusCls}">
+        <div class="monitor-status">
+          <div class="monitor-dot ${statusCls}"></div>
+          <span style="font-weight:600;font-size:13px;color:${ok?'var(--green)':n.status===0?'var(--red)':'var(--orange)'}">${ok?'Online':'Offline/Error'}</span>
+          <span class="badge ${ok?'b-ok':'b-err'}" style="margin-left:auto">${n.status||'—'}</span>
+        </div>
+        <div class="monitor-url">${n.url||''}</div>
+        <div class="monitor-metrics">
+          <div class="metric-item"><div class="metric-val" style="color:${n.response_ms>2000?'var(--red)':n.response_ms>500?'var(--orange)':'var(--green)'}">${n.response_ms||0}<span style="font-size:11px;font-weight:400">ms</span></div><div class="metric-lbl">Response Time</div></div>
+          <div class="metric-item"><div class="metric-val" style="color:var(--blue)">${fmtB(n.size_bytes||0)}</div><div class="metric-lbl">HTML Size</div></div>
+        </div>
+        ${n.error?`<div style="margin-top:10px;padding:8px;background:var(--red-bg);border-radius:6px;font-size:11.5px;color:var(--red)">${n.error}</div>`:''}
+        <div style="margin-top:8px;font-size:11px;color:var(--text3)">👤 User-Agent Normal</div>
+      </div>
+      <div class="monitor-card ${b.ok?'up':b.status===0?'down':'warn'}">
+        <div class="monitor-status">
+          <div class="monitor-dot ${b.ok?'up':b.status===0?'down':'warn'}"></div>
+          <span style="font-weight:600;font-size:13px;color:${b.ok?'var(--green)':b.status===0?'var(--red)':'var(--orange)'}">${b.ok?'Online':'Offline/Error'}</span>
+          <span class="badge ${b.ok?'b-ok':'b-err'}" style="margin-left:auto">${b.status||'—'}</span>
+        </div>
+        <div class="monitor-url">${b.url||''}</div>
+        <div class="monitor-metrics">
+          <div class="metric-item"><div class="metric-val" style="color:${b.response_ms>2000?'var(--red)':b.response_ms>500?'var(--orange)':'var(--green)'}">${b.response_ms||0}<span style="font-size:11px;font-weight:400">ms</span></div><div class="metric-lbl">Response Time</div></div>
+          <div class="metric-item"><div class="metric-val" style="color:var(--purple)">${fmtB(b.size_bytes||0)}</div><div class="metric-lbl">HTML Size (Bot)</div></div>
+        </div>
+        ${b.error?`<div style="margin-top:10px;padding:8px;background:var(--red-bg);border-radius:6px;font-size:11.5px;color:var(--red)">${b.error}</div>`:''}
+        <div style="margin-top:8px;font-size:11px;color:var(--text3)">🤖 Googlebot User-Agent</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;padding:14px;border-radius:var(--r);border:1px solid ${diff>20?'var(--red-bd)':diff>10?'var(--orange-bd)':'var(--green-bd)'};background:${diff>20?'var(--red-bg)':diff>10?'var(--orange-bg)':'var(--green-bg)'}">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:22px;font-weight:700;font-family:var(--fm);color:${diffColor}">${diff.toFixed(1)}%</div>
+        <div>
+          <div style="font-size:12.5px;font-weight:600;color:${diffColor}">Perbedaan Ukuran HTML Normal vs Bot</div>
+          <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${diff>20?'⚠️ Perbedaan signifikan — kemungkinan cloaking!':diff>10?'⚠ Perbedaan sedang — perlu diperhatikan':'✅ Normal — konten konsisten'}</div>
+        </div>
+        ${data.suspicious?'<span class="badge b-sus" style="margin-left:auto">SUSPICIOUS</span>':'<span class="badge b-ok" style="margin-left:auto">NORMAL</span>'}
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--text3);text-align:right">Dicek: ${data.timestamp||''}</div>`;
+}
+
+async function monitorTarget(){
+  document.getElementById('mon-last-check').textContent='Mengecek...';
+  const url='{{ target_url }}';
+  try{
+    const r=await fetch(`/api/monitor?url=${encodeURIComponent(url)}`);
+    const data=await r.json();
+    const n=data.normal||{};
+    const ok=n.ok;
+    const cls=ok?'up':n.status===0?'down':'warn';
+    document.getElementById('mon-target-result').innerHTML=`
+      <div class="monitor-card ${cls}" style="border-radius:var(--r2)">
+        <div class="monitor-status">
+          <div class="monitor-dot ${cls}"></div>
+          <span style="font-weight:600;color:${ok?'var(--green)':n.status===0?'var(--red)':'var(--orange)'}">${ok?'ONLINE':'OFFLINE'}</span>
+          <span class="badge ${ok?'b-ok':'b-err'}" style="margin-left:auto">HTTP ${n.status||'—'}</span>
+        </div>
+        <div class="monitor-url">${url}</div>
+        <div class="monitor-metrics" style="grid-template-columns:repeat(4,1fr)">
+          <div class="metric-item"><div class="metric-val" style="color:${n.response_ms>2000?'var(--red)':n.response_ms>500?'var(--orange)':'var(--green)'}">${n.response_ms||0}<span style="font-size:11px;font-weight:400">ms</span></div><div class="metric-lbl">Response Time</div></div>
+          <div class="metric-item"><div class="metric-val" style="color:var(--blue)">${fmtB(n.size_bytes||0)}</div><div class="metric-lbl">Page Size</div></div>
+          <div class="metric-item"><div class="metric-val" style="color:var(--purple)">${fmtN(logData?.total||0)}</div><div class="metric-lbl">Total Request</div></div>
+          <div class="metric-item"><div class="metric-val" style="color:${logData?.error_rate>5?'var(--red)':'var(--green)'}">${logData?.uptime_proxy||100}%</div><div class="metric-lbl">Uptime Proxy</div></div>
+        </div>
+        ${n.error?`<div style="margin-top:10px;padding:8px;background:var(--red-bg);border-radius:6px;font-size:11.5px;color:var(--red)">${n.error}</div>`:''}
+      </div>`;
+    document.getElementById('mon-last-check').textContent='Update: '+n.checked_at;
+  }catch(e){toast('Gagal monitor target','err');}
+}
+
+function loadPreview(){
+  const url=document.getElementById('preview-url').value.trim();
+  const mode=document.getElementById('preview-mode').value;
+  document.getElementById('preview-addr').textContent=url;
+  document.getElementById('preview-frame').src=url;
+  document.getElementById('preview-mode-badge').innerHTML=
+    mode==='bot'?'<span class="badge b-bot">🤖 Bot View</span>':'<span class="badge b-human">👤 Normal View</span>';
+}
+
+// ── Refresh ────────────────────────────────────────────────────
+async function refresh(manual=false){
+  if(manual) toast('Memperbarui data...','info');
+  await loadLogStats();
+  await loadDetStats();
+  // Re-render active page if traffic/threats
+  const active=document.querySelector('.page.active');
+  if(active){
+    const id=active.id;
+    if(id==='page-traffic'&&logData) renderTraffic();
+    if(id==='page-threats'&&logData) renderThreats();
   }
 }
 
-function clearLiveLog(){
-  const c = document.getElementById('live-log-container');
-  c.innerHTML = '<div class="log-empty"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Menunggu data log masuk...</div>';
-  liveCount = 0;
-}
-
-// ── Tail log (polling) ────────────────────────────────────────
-async function loadTailLog(){
-  const n = document.getElementById('tail-count').value;
-  const tbody = document.getElementById('tail-tbody');
-  try{
-    const r = await fetch('/api/tail-log?n='+n);
-    const data = await r.json();
-    if(data.error){ toast('⚠️ '+data.error); return; }
-    tbody.innerHTML = (data.lines||[]).map(d=>`<tr>
-      <td class="mono text-sm">${d.time_str||'—'}</td>
-      <td class="mono" style="color:#2563EB">${d.ip||'—'}</td>
-      <td class="mono ${methodClass(d.method)}">${d.method||'—'}</td>
-      <td class="mono" title="${d.url||''}" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.url||'—'}</td>
-      <td><span class="status-badge ${statusBadgeClass(d.status)}">${d.status||'—'}</span></td>
-      <td class="mono text-sm">${d.size?fmtBytes(d.size):'—'}</td>
-      <td>${d.is_bot?'<span class="bot-badge">BOT</span>':'<span class="human-badge">USER</span>'}</td>
-      <td class="text-muted text-sm" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.useragent||''}">${d.useragent||'—'}</td>
-    </tr>`).join('');
-  }catch(e){ toast('Gagal memuat tail log'); }
-}
-
-// ── Preview ────────────────────────────────────────────────────
-function loadPreview(){
-  const url = document.getElementById('preview-url-input').value.trim();
-  if(!url){ toast('Masukkan URL terlebih dahulu'); return; }
-  document.getElementById('preview-url-bar').textContent = url;
-  document.getElementById('preview-iframe').src = url;
-  document.getElementById('preview-mode-info').innerHTML =
-    '<span style="background:var(--blue-light);color:var(--blue);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">👤 MODE: Pengguna Normal</span> Menampilkan halaman sebagaimana dilihat pengguna biasa.';
-}
-
-function loadPreviewBot(){
-  const url = document.getElementById('preview-url-input').value.trim();
-  if(!url){ toast('Masukkan URL terlebih dahulu'); return; }
-  document.getElementById('preview-url-bar').textContent = url+' (Bot View)';
-  document.getElementById('preview-iframe').src = url;
-  document.getElementById('preview-mode-info').innerHTML =
-    '<span style="background:var(--purple-light);color:var(--purple);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">🤖 MODE: Googlebot</span> Halaman mungkin menampilkan konten berbeda untuk bot.';
-}
-
-function previewURL(url){
-  document.getElementById('preview-url-input').value = url;
-  goto('preview');
-  loadPreview();
-}
-
-// ── Auto refresh ──────────────────────────────────────────────
-async function refresh(){
-  await loadLogStats();
-  await loadDetStats();
-}
-
-// ── Init ──────────────────────────────────────────────────────
+// ── Init ───────────────────────────────────────────────────────
 refresh();
-loadTailLog();
-setInterval(refresh,       30000);  // stats setiap 30 detik
-setInterval(loadTailLog,   10000);  // tail log setiap 10 detik
+loadTail();
+setInterval(refresh, 30000);
+setInterval(loadTail, 15000);
 </script>
 </body>
 </html>
